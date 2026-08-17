@@ -44,11 +44,13 @@
   .daysval{font-family:var(--serif);font-size:22px;color:var(--accent-deep);min-width:82px;text-align:right;}
   .toggle{display:flex;align-items:center;gap:9px;font-size:15px;color:var(--soft);margin-top:16px;}
 
-  .qrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid rgba(120,100,80,0.1);}
+  .qrow{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid rgba(120,100,80,0.1);}
   .qrow:last-child{border-bottom:none;}
-  .qrow .qt{font-size:15px;flex:1;}
-  .yn{appearance:none;border:1px solid var(--line);background:#fbf7f0;font-family:var(--font);font-size:13px;font-weight:700;color:var(--soft);padding:9px 16px;border-radius:999px;cursor:pointer;min-width:64px;}
-  .yn[data-yes=true]{background:var(--sage);border-color:var(--sage);color:#fff;}
+  .qrow .qt{font-size:15px;flex:1;min-width:150px;}
+  .qopts{display:flex;gap:6px;flex-shrink:0;}
+  .qopt{appearance:none;border:1px solid var(--line);background:#fbf7f0;font-family:var(--font);font-size:13px;font-weight:700;color:var(--soft);padding:9px 14px;border-radius:999px;cursor:pointer;transition:all .15s ease;}
+  .qopt[data-on=true]{background:var(--sage);border-color:var(--sage);color:#fff;}
+  .qopt:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
   .rulerow{display:flex;gap:8px;margin-top:8px;}
   .rulerow input{flex:1;}
@@ -209,10 +211,10 @@ el("intl").addEventListener("change",function(){ state.intl=el("intl").checked; 
 /* ---------- pruning questions ---------- */
 function questionSet(){
   var t=state.tripType, qs=[];
-  qs.push({id:"laptop",q:"Laptop, honestly, or are you switching off?",def:t==="business"});
-  qs.push({id:"gym",q:"Be honest with me. Are you actually going to the gym?",def:(t==="adventure"||t==="ski")});
-  if(t==="beach") qs.push({id:"swim",q:"Actually swimming, or just there for the aperol?",def:true});
-  if(t==="wedding"||t==="romantic"||t==="city"||t==="business"||state.intl) qs.push({id:"evenings",q:"Evenings out, or early nights with room service?",def:(t==="wedding"||t==="romantic")});
+  qs.push({id:"laptop",q:"The laptop, honestly?",yes:"Bringing it",no:"Switching off",def:t==="business"});
+  qs.push({id:"gym",q:"Actually going to the gym? Be honest.",yes:"Yes, really",no:"No chance",def:(t==="adventure"||t==="ski")});
+  if(t==="beach") qs.push({id:"swim",q:"In the water, or there for the aperol?",yes:"Swimming",no:"Just the aperol",def:true});
+  if(t==="wedding"||t==="romantic"||t==="city"||t==="business"||t==="beach"||state.intl) qs.push({id:"evenings",q:"Your evenings?",yes:"Out out",no:"Room service",def:(t==="wedding"||t==="romantic"||t==="beach")});
   return qs;
 }
 function renderQuestions(){
@@ -223,11 +225,15 @@ function renderQuestions(){
     if(state.answers[q.id]===undefined) state.answers[q.id]=q.def;
     var row=document.createElement("div"); row.className="qrow";
     var t=document.createElement("div"); t.className="qt"; t.textContent=q.q;
-    var btn=document.createElement("button"); btn.className="yn"; btn.type="button";
-    function paint(){ btn.textContent=state.answers[q.id]?"Yes":"No"; btn.setAttribute("data-yes",state.answers[q.id]?"true":"false"); }
+    var opts=document.createElement("div"); opts.className="qopts";
+    var yb=document.createElement("button"); yb.className="qopt"; yb.type="button"; yb.textContent=q.yes||"Yes";
+    var nb=document.createElement("button"); nb.className="qopt"; nb.type="button"; nb.textContent=q.no||"No";
+    function paint(){ yb.setAttribute("data-on",state.answers[q.id]?"true":"false"); nb.setAttribute("data-on",state.answers[q.id]?"false":"true"); }
     paint();
-    btn.onclick=function(){ state.answers[q.id]=!state.answers[q.id]; paint(); };
-    row.appendChild(t); row.appendChild(btn); wrap.appendChild(row);
+    yb.onclick=function(){ state.answers[q.id]=true; paint(); };
+    nb.onclick=function(){ state.answers[q.id]=false; paint(); };
+    opts.appendChild(yb); opts.appendChild(nb);
+    row.appendChild(t); row.appendChild(opts); wrap.appendChild(row);
   });
 }
 
