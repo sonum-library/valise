@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#F6F0E8" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Valise" />
+<title>Valise, a packing muse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#F6F0E8; --panel:#FFFDF9; --ink:#3E3830; --soft:#8A8072;
+    --line:rgba(120,100,80,0.18); --accent:#C2795B; --accent-deep:#A85F44;
+    --sage:#8A9A7B; --radius:16px; --shadow:0 20px 46px -26px rgba(120,90,60,0.4);
+    --font:"Jost",-apple-system,BlinkMacSystemFont,sans-serif; --serif:"Fraunces",Georgia,serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--font);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased;
+    background:radial-gradient(120% 80% at 12% 0%, #FBF4EA 0%, transparent 55%),radial-gradient(120% 80% at 92% 8%, #F3EBDD 0%, transparent 50%),linear-gradient(180deg,#F6F0E8 0%,#F1E9DC 100%);
+    background-attachment:fixed;min-height:100vh;}
+  .wrap{max-width:760px;margin:0 auto;padding:30px 18px 90px;}
+  header{text-align:center;margin-bottom:24px;}
+  .wordmark{font-family:var(--serif);font-weight:600;font-size:38px;color:var(--accent-deep);margin:0;}
+  .wordmark .g{color:var(--accent);}
+  .tagline{font-size:16px;color:var(--soft);font-style:italic;margin-top:4px;font-family:var(--serif);}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:20px;box-shadow:var(--shadow);}
+  h2.step{font-family:var(--serif);font-weight:600;font-size:22px;color:var(--accent-deep);margin:0 0 4px;}
+  .hint{font-size:14px;color:var(--soft);margin:0 0 16px;}
+  label.lbl{display:block;font-size:15px;font-style:italic;color:var(--soft);margin:16px 0 8px;font-family:var(--serif);}
+  label.lbl:first-of-type{margin-top:0;}
+  input[type=text]{width:100%;font-family:var(--font);font-size:16px;color:var(--ink);background:#fbf7f0;border:1px solid var(--line);border-radius:10px;padding:12px 14px;}
+  input:focus{outline:none;border-color:var(--accent);}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{appearance:none;border:1px solid var(--line);background:#fbf7f0;font-family:var(--font);font-size:14px;font-weight:500;color:var(--ink);padding:10px 15px;border-radius:999px;cursor:pointer;transition:all .18s ease;}
+  .chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 8px 18px -12px var(--accent);}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .daysrow{display:flex;align-items:center;gap:14px;}
+  .daysrow input[type=range]{flex:1;accent-color:var(--accent);}
+  .daysval{font-family:var(--serif);font-size:22px;color:var(--accent-deep);min-width:82px;text-align:right;}
+  .toggle{display:flex;align-items:center;gap:9px;font-size:15px;color:var(--soft);margin-top:16px;}
+
+  .qrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid rgba(120,100,80,0.1);}
+  .qrow:last-child{border-bottom:none;}
+  .qrow .qt{font-size:15px;flex:1;}
+  .yn{appearance:none;border:1px solid var(--line);background:#fbf7f0;font-family:var(--font);font-size:13px;font-weight:700;color:var(--soft);padding:9px 16px;border-radius:999px;cursor:pointer;min-width:64px;}
+  .yn[data-yes=true]{background:var(--sage);border-color:var(--sage);color:#fff;}
+
+  .rulerow{display:flex;gap:8px;margin-top:8px;}
+  .rulerow input{flex:1;}
+  .rules-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+  .rule{background:#f4ede2;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px;display:flex;align-items:center;gap:8px;}
+  .rule button{border:none;background:none;color:var(--accent-deep);cursor:pointer;font-size:15px;line-height:1;}
+
+  .btn{appearance:none;border:none;cursor:pointer;font-family:var(--font);font-weight:600;border-radius:999px;transition:transform .15s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent-deep));color:#fff;font-size:16px;padding:15px 24px;box-shadow:0 14px 28px -14px var(--accent-deep);margin-top:20px;}
+  .btn-ghost{background:var(--panel);border:1px solid var(--line);color:var(--accent-deep);font-size:14px;padding:11px 18px;}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+
+  .trip-summary{background:linear-gradient(135deg,rgba(194,121,91,0.12),rgba(138,154,123,0.12));border:1px solid rgba(194,121,91,0.28);border-radius:var(--radius);padding:24px;margin-bottom:20px;text-align:center;}
+  .trip-summary .dest{font-family:var(--serif);font-size:26px;color:var(--accent-deep);font-weight:600;}
+  .trip-summary .meta{font-size:15px;color:var(--soft);margin-top:6px;}
+  .trip-summary .counts{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:16px;}
+  .trip-summary .pill{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:14px;}
+  .trip-summary .pill b{color:var(--accent-deep);}
+
+  .alerts{background:var(--panel);border:1px dashed var(--accent);border-radius:var(--radius);padding:20px 22px;margin-bottom:20px;}
+  .alerts h3{font-family:var(--serif);font-size:20px;color:var(--accent-deep);margin:0 0 10px;}
+  .alerts ul{margin:0;padding-left:18px;}
+  .alerts li{margin-bottom:8px;font-size:15px;}
+  .alerts li::marker{color:var(--accent);}
+
+  .cap-items{display:flex;flex-wrap:wrap;gap:8px;}
+  .cap-item{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 13px;font-size:14px;}
+  .cap-item b{color:var(--accent-deep);}
+
+  .progress{height:8px;background:#eadfce;border-radius:999px;overflow:hidden;margin:4px 0 18px;}
+  .progress span{display:block;height:100%;background:linear-gradient(90deg,var(--sage),var(--accent));width:0;transition:width .3s ease;}
+  .progresslabel{font-size:14px;color:var(--soft);margin-bottom:2px;}
+  .catblock{margin-bottom:18px;}
+  .catblock h4{font-family:var(--serif);font-size:18px;color:var(--accent-deep);margin:0 0 8px;font-weight:600;}
+  .checkitem{display:flex;align-items:flex-start;gap:11px;padding:9px 4px;border-bottom:1px solid rgba(120,100,80,0.08);cursor:pointer;}
+  .checkitem:last-child{border-bottom:none;}
+  .checkitem input{width:20px;height:20px;accent-color:var(--sage);cursor:pointer;flex-shrink:0;margin-top:2px;}
+  .checkitem .body{flex:1;}
+  .checkitem .body span{font-size:16px;}
+  .checkitem.done .body span{color:var(--soft);text-decoration:line-through;}
+  .quip{display:none;font-size:13px;font-style:italic;color:var(--accent-deep);margin-top:3px;}
+  .checkitem.done .quip{display:block;}
+  .pill{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:14px;}
+  .pill b{color:var(--accent-deep);}
+  @media (max-width:520px){ .wordmark{font-size:32px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="wordmark"><span class="g">&#9992;</span> valise</h1>
+    <div class="tagline">tell me the trip, darling, i will handle the case</div>
+  </header>
+
+  <div class="card">
+    <h2 class="step">What kind of trip is this?</h2>
+    <p class="hint">Pick one and I will do most of the thinking for you.</p>
+    <div class="chips" id="type-chips"></div>
+  </div>
+
+  <div class="card">
+    <h2 class="step">The basics</h2>
+    <label class="lbl" for="dest">where are you going?</label>
+    <input type="text" id="dest" placeholder="e.g. Lisbon, or a weekend in the Cotswolds" />
+    <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;">
+      <button class="btn btn-ghost" id="wx" type="button">Check the weather there</button>
+      <span id="wxout" style="font-size:14px;color:var(--soft);font-style:italic;"></span>
+    </div>
+    <label class="lbl" for="days">how many days?</label>
+    <div class="daysrow">
+      <input type="range" id="days" min="1" max="21" value="5" />
+      <div class="daysval" id="daysval">5 days</div>
+    </div>
+    <label class="toggle"><input type="checkbox" id="intl" /> it is an international trip</label>
+  </div>
+
+  <div class="card">
+    <h2 class="step">Your packing personality</h2>
+    <p class="hint">Be honest. I will not judge. Much.</p>
+    <div class="chips" id="pers-chips"></div>
+  </div>
+
+  <div class="card" id="q-card" hidden>
+    <h2 class="step">A few honest questions</h2>
+    <p class="hint">This is where the dead weight gets cut.</p>
+    <div id="questions"></div>
+  </div>
+
+  <div class="card">
+    <h2 class="step">Your non-negotiables</h2>
+    <p class="hint">The things you always pack, no matter what. I will remember them.</p>
+    <div class="rulerow">
+      <input type="text" id="rule-input" placeholder="e.g. two pairs of sunglasses" />
+      <button class="btn btn-ghost" id="rule-add" type="button">Add</button>
+    </div>
+    <div class="rules-list" id="rules-list"></div>
+  </div>
+
+  <button class="btn btn-primary" id="build">Pack my case</button>
+  <div id="result" style="margin-top:20px;"></div>
+</div>
+
+<script>
+var store={
+  get:function(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}},
+  set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+};
+
+var TYPES=[
+  {key:"beach",label:"Beach holiday",climate:"hot"},
+  {key:"city",label:"City break",climate:"mild"},
+  {key:"business",label:"Business",climate:"mild"},
+  {key:"wedding",label:"Wedding",climate:"mild"},
+  {key:"adventure",label:"Adventure",climate:"mild"},
+  {key:"ski",label:"Ski trip",climate:"cold"},
+  {key:"family",label:"Visiting family",climate:"mild"},
+  {key:"romantic",label:"Romantic getaway",climate:"warm"},
+  {key:"unsure",label:"No idea, just help me",climate:"mild"}
+];
+var PERS=[
+  {key:"minimalist",label:"Minimalist",mult:0.85},
+  {key:"sensible",label:"Sensible",mult:1.0},
+  {key:"overpacker",label:"Overpacker",mult:1.2},
+  {key:"feral",label:"Feral (Mary Poppins)",mult:1.45}
+];
+var PLUGS={US:"type A and B",CA:"type A and B",JP:"type A and B",MX:"type A and B",
+  GB:"type G",IE:"type G",
+  FR:"type E",BE:"type E",PL:"type E",
+  DE:"type F",ES:"type C and F",IT:"type F and L",NL:"type C and F",PT:"type F",GR:"type F",AT:"type F",CH:"type J",
+  AU:"type I",NZ:"type I",CN:"type I and A",
+  IN:"type D and M",TH:"type A and C",AE:"type G",ZA:"type M and N",BR:"type N",AR:"type I"};
+
+var state={dest:"",countryCode:"",countryName:"",days:5,climate:"mild",intl:false,
+  tripType:"",personality:"sensible",answers:{},rules:store.get("valise_rules")||[],myItems:store.get("valise_items")||[],bags:[],list:null};
+
+function el(id){return document.getElementById(id);}
+function has(arr,v){return arr.indexOf(v)>-1;}
+function clamp(n,lo,hi){return Math.max(lo,Math.min(hi,n));}
+
+/* ---------- chips ---------- */
+function chipRow(id,opts,getSel,onPick){
+  var wrap=el(id); wrap.innerHTML="";
+  opts.forEach(function(o){
+    var b=document.createElement("button"); b.className="chip"; b.textContent=o.label;
+    b.setAttribute("aria-pressed",getSel(o.key)?"true":"false");
+    b.onclick=function(){ onPick(o.key); wrap.querySelectorAll(".chip").forEach(function(bb,i){ bb.setAttribute("aria-pressed",getSel(opts[i].key)?"true":"false"); }); };
+    wrap.appendChild(b);
+  });
+}
+chipRow("type-chips",TYPES,function(k){return state.tripType===k;},function(k){ state.tripType=k; var t=TYPES.filter(function(x){return x.key===k;})[0]; if(t)state.climate=t.climate; renderQuestions(); });
+chipRow("pers-chips",PERS,function(k){return state.personality===k;},function(k){ state.personality=k; });
+
+el("days").addEventListener("input",function(){ state.days=parseInt(el("days").value,10); el("daysval").textContent=state.days+(state.days===1?" day":" days"); });
+el("dest").addEventListener("input",function(){ state.dest=el("dest").value; });
+el("intl").addEventListener("change",function(){ state.intl=el("intl").checked; });
+
+/* ---------- pruning questions ---------- */
+function questionSet(){
+  var t=state.tripType, qs=[];
+  qs.push({id:"laptop",q:"Laptop, honestly, or are you switching off?",def:t==="business"});
+  qs.push({id:"gym",q:"Be honest with me. Are you actually going to the gym?",def:(t==="adventure"||t==="ski")});
+  if(t==="beach") qs.push({id:"swim",q:"Actually swimming, or just there for the aperol?",def:true});
+  if(t==="wedding"||t==="romantic"||t==="city"||t==="business"||state.intl) qs.push({id:"evenings",q:"Evenings out, or early nights with room service?",def:(t==="wedding"||t==="romantic")});
+  return qs;
+}
+function renderQuestions(){
+  if(!state.tripType){ el("q-card").hidden=true; return; }
+  el("q-card").hidden=false;
+  var qs=questionSet(), wrap=el("questions"); wrap.innerHTML="";
+  qs.forEach(function(q){
+    if(state.answers[q.id]===undefined) state.answers[q.id]=q.def;
+    var row=document.createElement("div"); row.className="qrow";
+    var t=document.createElement("div"); t.className="qt"; t.textContent=q.q;
+    var btn=document.createElement("button"); btn.className="yn"; btn.type="button";
+    function paint(){ btn.textContent=state.answers[q.id]?"Yes":"No"; btn.setAttribute("data-yes",state.answers[q.id]?"true":"false"); }
+    paint();
+    btn.onclick=function(){ state.answers[q.id]=!state.answers[q.id]; paint(); };
+    row.appendChild(t); row.appendChild(btn); wrap.appendChild(row);
+  });
+}
+
+/* ---------- custom rules ---------- */
+function renderRules(){
+  var wrap=el("rules-list"); wrap.innerHTML="";
+  state.rules.forEach(function(r,i){
+    var tag=document.createElement("div"); tag.className="rule";
+    var s=document.createElement("span"); s.textContent=r;
+    var x=document.createElement("button"); x.innerHTML="&times;"; x.setAttribute("aria-label","remove");
+    x.onclick=function(){ state.rules.splice(i,1); store.set("valise_rules",state.rules); renderRules(); };
+    tag.appendChild(s); tag.appendChild(x); wrap.appendChild(tag);
+  });
+}
+el("rule-add").onclick=function(){
+  var v=el("rule-input").value.trim(); if(!v)return;
+  state.rules.push(v); store.set("valise_rules",state.rules); el("rule-input").value=""; renderRules();
+};
+el("rule-input").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); el("rule-add").click(); } });
+
+/* ---------- weather ---------- */
+function checkWeather(){
+  var q=(el("dest").value||"").trim(); var out=el("wxout");
+  if(!q){ out.textContent="a destination first, darling"; return; }
+  out.textContent="checking...";
+  fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(q)+"&count=1")
+    .then(function(r){return r.json();})
+    .then(function(geo){
+      if(!geo.results||!geo.results.length) throw new Error("nf");
+      var g=geo.results[0]; state.countryCode=g.country_code||""; state.countryName=g.country||g.name;
+      return fetch("https://api.open-meteo.com/v1/forecast?latitude="+g.latitude+"&longitude="+g.longitude+"&daily=temperature_2m_max,precipitation_probability_max&forecast_days=7").then(function(r){return r.json();}).then(function(wx){return {g:g,wx:wx};});
+    })
+    .then(function(res){
+      var temps=res.wx.daily.temperature_2m_max||[]; var rains=res.wx.daily.precipitation_probability_max||[];
+      if(!temps.length) throw new Error("nd");
+      var avg=temps.reduce(function(a,b){return a+b;},0)/temps.length;
+      var maxRain=Math.max.apply(null,rains.length?rains:[0]);
+      state.climate=avg>=27?"hot":avg>=19?"warm":avg>=11?"mild":"cold";
+      state.rainLikely=maxRain>=45;
+      var place=res.g.name+(res.g.country_code?", "+res.g.country_code:"");
+      out.textContent=place+": about "+Math.round(avg)+"\u00B0C this week, so I have called it "+state.climate+(state.rainLikely?", with rain likely":"")+".";
+    })
+    .catch(function(){ out.textContent="could not reach the forecast, we will guess"; });
+}
+el("wx").onclick=checkWeather;
+
+/* ---------- generate ---------- */
+function generate(){
+  var d=state.days, c=state.climate, t=state.tripType||"unsure", a=state.answers, p=state.personality;
+  var beach=t==="beach"||a.swim;
+  var wedding=t==="wedding";
+  var smart=t==="business"||wedding;
+  var nightlife=a.evenings||t==="romantic"||wedding;
+  var active=a.gym||t==="adventure"||t==="ski";
+  var ski=t==="ski";
+  var cosy=t==="family";
+  var laptop=a.laptop;
+  var walk=t==="city"||t==="adventure";
+  var rain=!!state.rainLikely;
+
+  var persObj=PERS.filter(function(x){return x.key===p;})[0]||PERS[1];
+  var mult=persObj.mult;
+  var laundry=d>=8; var dEff=laundry?Math.ceil(d/2)+1:d;
+
+  var cap=[];
+  var tops=clamp(Math.ceil((Math.ceil(dEff*0.6)+2)*mult),3,12);
+  var bottoms=clamp(Math.ceil((Math.ceil(dEff/3)+1)*mult),2,6);
+  cap.push({item:"Tops",qty:tops}); cap.push({item:"Bottoms",qty:bottoms});
+  var dresses=0;
+  if(nightlife||smart||beach||t==="city"||t==="romantic"){ dresses=(nightlife||smart?2:1)+(p==="feral"?1:0); cap.push({item:(nightlife||smart?"Dresses / evening outfits":"A dress or nicer outfit"),qty:dresses}); }
+
+  var wearPlane=[];
+  if(ski){ cap.push({item:"Ski jacket and trousers",qty:1}); cap.push({item:"Thermal base layers",qty:clamp(Math.ceil(d/2),2,5)}); cap.push({item:"Thick thermal socks",qty:d}); cap.push({item:"Fleece or mid-layer",qty:2}); wearPlane.push("the bulkiest jacket"); }
+  else if(c==="cold"){ cap.push({item:"Warm sweaters",qty:clamp(Math.ceil((Math.ceil(dEff/3)+1)*mult),2,5)}); cap.push({item:"A proper coat",qty:1}); cap.push({item:"Thermals",qty:2}); wearPlane.push("the coat"); wearPlane.push("the boots"); }
+  else if(c==="mild"){ cap.push({item:"A jacket or cardigan",qty:2}); wearPlane.push("the jacket"); }
+  else if(c==="warm"){ cap.push({item:"A light layer for evenings",qty:1}); }
+  else { cap.push({item:"A light layer (for AC and shade)",qty:1}); }
+
+  if(active){ cap.push({item:"Activewear sets",qty:clamp(Math.ceil(Math.ceil(dEff/3)*mult),1,5)}); }
+  if(beach) cap.push({item:"Swimwear",qty:clamp(Math.ceil((Math.ceil(dEff/4)+1)*mult),1,4)});
+  cap.push({item:"Underwear",qty:dEff+2});
+  cap.push({item:"Socks",qty:(c==="cold"||active)?dEff+1:Math.ceil(dEff/2)+2});
+  cap.push({item:"Sleepwear",qty:clamp(Math.ceil(dEff/4)+1,1,3)});
+  if(cosy) cap.push({item:"Something soft to lounge in",qty:1});
+
+  var pieces=cap.reduce(function(s,i){return s+i.qty;},0);
+  var outfits=tops*bottoms+dresses*2+(active?3:0);
+
+  var list={};
+  list["Clothing"]=cap.map(function(i){return i.item+"  x"+i.qty;});
+
+  var shoes=["A comfy everyday pair"];
+  if(beach) shoes.push("Sandals");
+  if(nightlife||smart||wedding) shoes.push("Heels or your nicer shoes");
+  if(active&&!ski) shoes.push("Trainers");
+  if(ski) shoes.push("Snow boots");
+  else if(c==="cold") shoes.push("Warm boots");
+  if(walk) shoes.push("Broken-in walking shoes");
+  if(p==="feral") shoes.push("The extra pair you are bringing anyway");
+  list["Shoes"]=shoes;
+
+  var skin=["Cleanser","Moisturiser","SPF (every day)","Serums and actives","Micellar or toner","Toothbrush and paste","Deodorant","Haircare","Any makeup you actually wear","Cotton pads and buds"];
+  if(beach||c==="hot") skin.push("Aftersun");
+  list["Toiletries and skincare"]=skin;
+
+  var tech=["Phone and charger","Cables (headphones, laptop, watch)","A power bank","Headphones","Camera (for the nostalgia later)"];
+  if(laptop) tech.unshift("Laptop and its charger");
+  if(state.intl) tech.push("Travel adapter");
+  list["Tech"]=tech;
+
+  var docs=[state.intl?"Passport":"Photo ID","Boarding pass and tickets","Wallet and cards","Some local cash"];
+  if(state.intl){ docs.push("Travel insurance details"); docs.push("A copy of your documents"); docs.push("eSIM installed or roaming sorted"); }
+  list["Documents"]=docs;
+
+  var extras=["Sunglasses (two pairs, options matter)","Reusable water bottle","Medication and a small first-aid kit","A tote or day bag","Snacks for the journey"];
+  if(rain) extras.push("Compact umbrella and something waterproof");
+  if(c==="hot"||beach){ extras.push("Sunscreen"); extras.push("A sun hat"); }
+  if(beach) extras.push("A beach bag and a cover-up");
+  if(c==="cold"||ski) extras.push("Scarf, gloves and a warm hat");
+  if(ski){ extras.push("Ski goggles"); extras.push("Hand warmers"); }
+  if(walk) extras.push("Blister plasters");
+  if(wedding||smart) extras.push("The formal outfit, pressed and ready");
+  if(laundry) extras.push("Travel detergent sheets (for the mid-trip wash)");
+  extras.push("A laundry or shoe bag");
+  list["Extras"]=extras;
+
+  // feral and overpacker flourishes
+  if(p==="feral"){
+    list["Your what-ifs"]=["Backup sunglasses (the spare spares)","Emotional-support cardigan","Emergency outfit x2","'What if' outfits x4 (for the invitations that will not come)","A second book you will not open","One nice thing 'just in case something happens'"];
+  } else if(p==="overpacker"){
+    list["Your what-ifs"]=["One nicer outfit, just in case","A backup cardigan","An extra pair of sunglasses"];
+  }
+
+  // custom rules
+  if(state.rules.length){ list["Your non-negotiables"]=state.rules.slice(); }
+
+  // witty night-before and travel-day with quips
+  var night=[
+    {label:"Charge the power bank",quip:"Charged. Look at you, functioning like an adult."},
+    {label:"Charge your headphones",quip:"Silence for the aisle-seat talker, secured."},
+    {label:"Online check-in and save the boarding pass",quip:"Checked in. Practically a pilot."},
+    {label:"Download offline maps",quip:"You will still get lost, but now with confidence."},
+    {label:"Download playlists and podcasts",quip:"A soundtrack for looking wistfully out of the window."},
+    {label:"Clear some space on your camera roll",quip:"Room made for four hundred near-identical photos of a door."},
+    {label:"Lay out your travel outfit",quip:"Comfortable but photographable. Obviously."}
+  ];
+  if(state.intl) night.push({label:"Confirm the eSIM or roaming actually works",quip:"Connected. The group chat is safe."});
+  list["The night before"]=night;
+
+  var day=[
+    {label:"Passport or ID into the bag you are carrying",quip:"Confirmed. Do not put it somewhere stupid now."},
+    {label:"Wallet, keys, phone, one last sweep",quip:"The holy trinity. Well done."},
+    {label:"Wear the bulky things instead of packing them",quip:"Smug and space-saving. A rare combination."},
+    {label:"Water bottle empty for security, then fill it",quip:"Hydrated and law-abiding."},
+    {label:"Snacks within arm's reach",quip:"You will not become a problem at hour three now."}
+  ];
+  list["Travel day"]=day;
+
+  // the forgetting radar
+  var alerts=[];
+  if(state.intl){
+    var plug=PLUGS[state.countryCode];
+    if(plug) alerts.push((state.countryName||"There")+" runs on "+plug+" plugs, so an adapter is in. Your straighteners will thank me.");
+    else alerts.push("Different country, likely different plugs, so an adapter made the cut. Check the socket type to be sure.");
+  }
+  if(beach) alerts.push("Swimwear is packed, and a cover-up with it, unless the plan is to drip through the lobby.");
+  if(rain) alerts.push("Rain is on the cards, so something waterproof earned its place. Romantic, I know.");
+  if(wedding) alerts.push("It is a wedding, so the heels are in to keep the dress company. You are welcome.");
+  if(ski) alerts.push("Ski trip, so thermals and goggles are handled. Frostbite is not the aesthetic.");
+  if(laundry) alerts.push("Long one, this, so I packed for about half and pencilled in a wash. Fewer knickers, more freedom.");
+  if(!laptop && (t==="business")) alerts.push("You said no laptop for a work trip. Bold. I have left it out, as instructed.");
+  if(p==="feral") alerts.push("Feral mode engaged. I have packed for four hypothetical lives, and I have no notes.");
+
+  return {capsule:cap,pieces:pieces,outfits:outfits,list:list,wearPlane:wearPlane,laundry:laundry,alerts:alerts,days:d,tops:tops,bottoms:bottoms};
+}
+
+/* ---------- item-level layer: pieces, doubles, outfits ---------- */
+var COLOURS=["black","white","cream","ivory","beige","tan","camel","brown","navy","blue","denim","grey","gray","charcoal","green","olive","khaki","sage","red","burgundy","maroon","pink","blush","rose","purple","lilac","lavender","yellow","mustard","gold","orange","rust","silver","nude"];
+var GARMENTS=[
+  ["top","tops","top"],["tops","tops","top"],["shirt","tops","top"],["tee","tops","top"],["tshirt","tops","top"],["blouse","tops","top"],["cami","tops","top"],["camisole","tops","top"],["tank","tops","top"],["vest","tops","top"],["bodysuit","tops","top"],["turtleneck","tops","top"],["polo","tops","top"],
+  ["knit","tops","knit"],["sweater","tops","knit"],["jumper","tops","knit"],
+  ["trousers","bottoms","trousers"],["trouser","bottoms","trousers"],["pants","bottoms","trousers"],["slacks","bottoms","trousers"],["chinos","bottoms","trousers"],["culottes","bottoms","trousers"],
+  ["jeans","bottoms","jeans"],["jean","bottoms","jeans"],
+  ["leggings","bottoms","leggings"],["legging","bottoms","leggings"],
+  ["skirt","bottoms","skirt"],["shorts","bottoms","shorts"],
+  ["dress","dress","dress"],["gown","dress","dress"],
+  ["jumpsuit","dress","jumpsuit"],["romper","dress","jumpsuit"],["playsuit","dress","jumpsuit"],
+  ["blazer","outerwear","jacket"],["jacket","outerwear","jacket"],
+  ["coat","outerwear","coat"],["trench","outerwear","coat"],["parka","outerwear","coat"],
+  ["cardigan","outerwear","cardigan"],["gilet","outerwear","gilet"],
+  ["kimono","outerwear","overshirt"],["overshirt","outerwear","overshirt"],["shacket","outerwear","overshirt"],
+  ["heels","shoes","heels"],["heel","shoes","heels"],["pumps","shoes","heels"],
+  ["boots","shoes","boots"],["boot","shoes","boots"],
+  ["trainers","shoes","trainers"],["trainer","shoes","trainers"],["sneakers","shoes","trainers"],["sneaker","shoes","trainers"],
+  ["sandals","shoes","sandals"],["sandal","shoes","sandals"],
+  ["loafers","shoes","flats"],["loafer","shoes","flats"],["flats","shoes","flats"],["flat","shoes","flats"],["mules","shoes","flats"],["mule","shoes","flats"],
+  ["shoes","shoes","shoes"],["shoe","shoes","shoes"]
+];
+function ucFirst(s){ return s?s.charAt(0).toUpperCase()+s.slice(1):s; }
+function parseItem(raw){
+  var s=raw.toLowerCase(); var words=s.split(/[^a-z]+/).filter(Boolean);
+  function hasWord(w){ return words.indexOf(w)>-1; }
+  var colour=""; for(var i=0;i<COLOURS.length;i++){ if(hasWord(COLOURS[i])){ colour=COLOURS[i]; break; } }
+  var family="other", norm="";
+  for(var g=0;g<GARMENTS.length;g++){ if(hasWord(GARMENTS[g][0])){ family=GARMENTS[g][1]; norm=GARMENTS[g][2]; break; } }
+  return {raw:raw.trim(), colour:colour, family:family, norm:norm};
+}
+var PLURALS={trousers:["trousers",1],jeans:["jeans",1],leggings:["leggings",1],shorts:["shorts",1],skirt:["skirts",0],heels:["heels",1],boots:["boots",1],trainers:["trainers",1],sandals:["sandals",1],flats:["flats",1],shoes:["shoes",1],top:["tops",0],knit:["knits",0],jacket:["jackets",0],coat:["coats",0],cardigan:["cardigans",0],gilet:["gilets",0],overshirt:["overshirts",0],dress:["dresses",0],jumpsuit:["jumpsuits",0]};
+function pluralPhrase(it){ var p=PLURALS[it.norm]; var col=it.colour?it.colour+" ":""; if(!p) return col+(it.norm||it.raw)+"s"; return p[1]?("pairs of "+col+p[0]):(col+p[0]); }
+function addPiece(raw){
+  var it=parseItem(raw); var flag="";
+  if(it.norm){
+    var existing=state.myItems.filter(function(m){return m.norm===it.norm && (m.colour||"")===(it.colour||"");});
+    var n=existing.length;
+    if(n===1){ flag="Wait, darling. Is that the same "+(it.colour?it.colour+" ":"")+it.norm+", or are we genuinely committing to two?"; }
+    else if(n>=2){ flag="That is "+(n+1)+" "+pluralPhrase(it)+". I am not judging, darling. I am simply counting."; }
+  }
+  state.myItems.push(it); store.set("valise_items",state.myItems); return flag;
+}
+function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+function buildOutfits(){
+  var tops=state.myItems.filter(function(m){return m.family==="tops";});
+  var bottoms=state.myItems.filter(function(m){return m.family==="bottoms";});
+  var dresses=state.myItems.filter(function(m){return m.family==="dress";});
+  var layers=state.myItems.filter(function(m){return m.family==="outerwear";});
+  if(!((tops.length&&bottoms.length)||dresses.length)) return null;
+  var cool=state.climate==="cold"||state.climate==="mild";
+  var st=shuffle(tops), sb=shuffle(bottoms), sd=shuffle(dresses), sl=shuffle(layers);
+  var days=state.days, plan=[];
+  for(var i=0;i<days;i++){
+    var look;
+    if(sd.length && st.length && sb.length && i%3===2){ look=ucFirst(sd[i%sd.length].raw); }
+    else if(st.length&&sb.length){ look=ucFirst(st[i%st.length].raw)+" + "+sb[i%sb.length].raw; }
+    else if(sd.length){ look=ucFirst(sd[i%sd.length].raw); }
+    else break;
+    if(cool && sl.length && i%2===0 && look.indexOf(sl[i%sl.length].raw)<0) look+=" + "+sl[i%sl.length].raw;
+    plan.push(look);
+  }
+  return {plan:plan, combos:(tops.length*bottoms.length)+dresses.length, tops:tops.length, bottoms:bottoms.length, dresses:dresses.length};
+}
+function renderPieces(){
+  var host=el("pieces-host"); if(!host) return; host.innerHTML="";
+  if(!state.myItems.length){
+    var em=document.createElement("div"); em.className="hint"; em.textContent="No pieces yet. Add a few of your actual clothes and I will plan your looks and quietly clock your doubles, darling.";
+    host.appendChild(em);
+  } else {
+    var listWrap=document.createElement("div"); listWrap.className="rules-list";
+    state.myItems.forEach(function(m,i){
+      var tag=document.createElement("div"); tag.className="rule";
+      var s=document.createElement("span"); s.textContent=m.raw;
+      var x=document.createElement("button"); x.innerHTML="&times;"; x.setAttribute("aria-label","remove");
+      x.onclick=function(){ state.myItems.splice(i,1); store.set("valise_items",state.myItems); renderPieces(); };
+      tag.appendChild(s); tag.appendChild(x); listWrap.appendChild(tag);
+    });
+    host.appendChild(listWrap);
+  }
+  var flagBox=document.createElement("div"); flagBox.id="piece-flag"; flagBox.style.cssText="margin-top:12px;font-size:14px;font-style:italic;color:var(--accent-deep);"; host.appendChild(flagBox);
+  var ob=buildOutfits();
+  var op=document.createElement("div"); op.style.marginTop="18px";
+  if(ob){
+    op.innerHTML='<h4 style="font-family:var(--serif);font-size:18px;color:var(--accent-deep);margin:0 0 4px;">Your outfits</h4>'+
+      '<p class="hint">'+ob.combos+' looks from '+ob.tops+' tops and '+ob.bottoms+' bottoms'+(ob.dresses?' plus '+ob.dresses+' dresses':'')+'. Enough that no one will ever know you repeat.</p>';
+    var ol=document.createElement("div");
+    ob.plan.forEach(function(look,i){
+      var dd=document.createElement("div"); dd.style.cssText="padding:9px 0;border-bottom:1px solid rgba(120,100,80,0.08);font-size:15px;";
+      dd.innerHTML='<b style="color:var(--accent-deep);">Day '+(i+1)+'</b> &middot; '+look;
+      ol.appendChild(dd);
+    });
+    op.appendChild(ol);
+    var rs=document.createElement("button"); rs.className="btn btn-ghost"; rs.style.marginTop="14px"; rs.textContent="Reshuffle the looks";
+    rs.onclick=function(){ renderPieces(); };
+    op.appendChild(rs);
+  } else {
+    op.innerHTML='<p class="hint">Add at least a top and a bottom (or a dress) and I will turn your pieces into a week of outfits.</p>';
+  }
+  host.appendChild(op);
+}
+
+/* ---------- phase 3: the suitcase reality check ---------- */
+var BAGS=[
+  {key:"carryon",label:"Carry-on",vol:40,kg:10},
+  {key:"checkedM",label:"Checked (medium)",vol:65,kg:23},
+  {key:"checkedL",label:"Checked (large)",vol:95,kg:23},
+  {key:"backpack",label:"Backpack",vol:30,kg:12},
+  {key:"tote",label:"Tote / personal",vol:15,kg:8}
+];
+function estimateUnit(label){
+  var s=label.toLowerCase();
+  function m(){ for(var i=0;i<arguments.length;i++){ if(s.indexOf(arguments[i])>-1) return true; } return false; }
+  if(m("laptop")) return {w:1800,v:2.5};
+  if(m("ski jacket")) return {w:1600,v:5};
+  if(m("coat")) return {w:1200,v:4};
+  if(m("snow boots","warm boots","boots")) return {w:1200,v:5};
+  if(m("trainers","walking shoes")) return {w:750,v:3.5};
+  if(m("heels","nicer shoes")) return {w:500,v:2.5};
+  if(m("sandals")) return {w:300,v:1.5};
+  if(m("everyday pair","comfy")) return {w:700,v:3};
+  if(m("shoes","loafers")) return {w:650,v:3};
+  if(m("sweater","jumper","fleece","mid-layer","cardigan")) return {w:400,v:1.5};
+  if(m("jacket","blazer","trench","light layer")) return {w:500,v:2};
+  if(m("dress","gown","jumpsuit")) return {w:320,v:1.1};
+  if(m("formal outfit","emergency outfit","what if","outfit")) return {w:520,v:1.6};
+  if(m("trousers","jeans","bottoms","slacks","skirt","shorts")) return {w:400,v:1.2};
+  if(m("thermal","base layer")) return {w:200,v:0.6};
+  if(m("activewear")) return {w:300,v:1};
+  if(m("swimwear")) return {w:110,v:0.3};
+  if(m("sleepwear","lounge")) return {w:280,v:1.1};
+  if(m("underwear")) return {w:45,v:0.1};
+  if(m("socks")) return {w:55,v:0.15};
+  if(m("knit","tops","top","shirt","tee","blouse","cami","turtleneck","polo")) return {w:230,v:0.9};
+  if(m("camera")) return {w:500,v:1};
+  if(m("power bank","charger","cables")) return {w:250,v:0.4};
+  if(m("headphones")) return {w:250,v:0.5};
+  if(m("phone")) return {w:220,v:0.3};
+  if(m("adapter")) return {w:120,v:0.2};
+  if(m("water bottle")) return {w:280,v:0.8};
+  if(m("hat")) return {w:150,v:1.2};
+  if(m("beach bag","cover-up","tote","day bag")) return {w:350,v:1.4};
+  if(m("scarf","gloves")) return {w:400,v:1.5};
+  if(m("goggles")) return {w:300,v:1};
+  if(m("book")) return {w:350,v:0.8};
+  if(m("umbrella","waterproof")) return {w:400,v:1};
+  if(m("sunscreen","aftersun","medication","first-aid","snacks")) return {w:250,v:0.6};
+  if(m("sunglasses")) return {w:160,v:0.5};
+  if(m("toothbrush","deodorant","cleanser","moisturiser","serum","spf","haircare","makeup","micellar","cotton","toiletr","skincare")) return {w:100,v:0.2};
+  if(m("detergent","laundry","shoe bag","blister","hand warmers")) return {w:80,v:0.2};
+  return {w:200,v:0.5};
+}
+function estOf(label){ var q=1; var mm=label.match(/x\s*(\d+)/i); if(mm) q=parseInt(mm[1],10); var u=estimateUnit(label); return {w:u.w*q, v:u.v*q}; }
+function estFamily(f){ if(f==="bottoms")return {w:400,v:1.2}; if(f==="dress")return {w:320,v:1.1}; if(f==="outerwear")return {w:600,v:2.2}; if(f==="shoes")return {w:700,v:3}; if(f==="tops")return {w:230,v:0.9}; return {w:200,v:0.6}; }
+var SKIP_CATS={"The night before":1,"Travel day":1,"Documents":1};
+function computeLoad(){
+  var W=0,V=0;
+  Object.keys(state.list.list).forEach(function(cat){ if(SKIP_CATS[cat])return; state.list.list[cat].forEach(function(entry){ var lab=typeof entry==="string"?entry:entry.label; var e=estOf(lab); W+=e.w; V+=e.v; }); });
+  state.myItems.forEach(function(mm){ var e=estFamily(mm.family); W+=e.w; V+=e.v; });
+  return {weight:W/1000, volume:V};
+}
+function collectCuts(){
+  var cuts=[], seen={};
+  state.myItems.forEach(function(mm){ if(mm.norm){ var k=(mm.colour||"")+"|"+mm.norm; seen[k]=(seen[k]||0)+1; if(seen[k]>=2){ var e=estFamily(mm.family); cuts.push({label:"One of your "+pluralPhrase(mm), why:"you packed "+seen[k]+" of them", pri:1, w:e.w, dup:true, colour:mm.colour, norm:mm.norm}); } } });
+  (state.list.list["Your what-ifs"]||[]).forEach(function(entry){ var lab=typeof entry==="string"?entry:entry.label; cuts.push({label:lab, why:"the hypothetical life that will not happen", pri:2, w:estOf(lab).w, cat:"Your what-ifs"}); });
+  var bulky=[];
+  Object.keys(state.list.list).forEach(function(cat){ if(SKIP_CATS[cat]||cat==="Your what-ifs")return; state.list.list[cat].forEach(function(entry){ var lab=typeof entry==="string"?entry:entry.label; var e=estOf(lab); bulky.push({label:lab,v:e.v,w:e.w,cat:cat}); }); });
+  bulky.sort(function(a,b){return b.v-a.v;});
+  bulky.slice(0,2).forEach(function(b){ if(b.v>=2) cuts.push({label:b.label, why:"it is eating your case whole", pri:3, w:b.w, cat:b.cat}); });
+  var repl=["sunscreen","water bottle","snacks","umbrella","detergent","toothbrush","haircare"];
+  Object.keys(state.list.list).forEach(function(cat){ if(SKIP_CATS[cat])return; state.list.list[cat].forEach(function(entry){ var lab=typeof entry==="string"?entry:entry.label; var low=lab.toLowerCase(); for(var i=0;i<repl.length;i++){ if(low.indexOf(repl[i])>-1){ cuts.push({label:lab, why:"buy it there, they do have shops", pri:4, w:estOf(lab).w, cat:cat}); break; } } }); });
+  var byLabel={}; cuts.forEach(function(c){ if(!byLabel[c.label]||c.pri<byLabel[c.label].pri) byLabel[c.label]=c; });
+  var arr=Object.keys(byLabel).map(function(k){return byLabel[k];});
+  arr.sort(function(a,b){ return a.pri-b.pri; });
+  return arr.slice(0,5);
+}
+function removeListItem(cat,label){
+  var arr=state.list.list[cat]; if(!arr) return;
+  for(var i=0;i<arr.length;i++){ var lab=typeof arr[i]==="string"?arr[i]:arr[i].label; if(lab===label){ arr.splice(i,1); break; } }
+  saveChecks();
+  var key=cat+"||"+label; if(checkRows[key]){ checkRows[key].remove(); delete checkRows[key]; }
+  updateProgress();
+}
+function removeDup(colour,norm){
+  for(var i=0;i<state.myItems.length;i++){ if(state.myItems[i].norm===norm && (state.myItems[i].colour||"")===(colour||"")){ state.myItems.splice(i,1); break; } }
+  store.set("valise_items",state.myItems); if(el("pieces-host")) renderPieces();
+}
+function renderCuts(box){
+  var cuts=collectCuts();
+  if(!cuts.length){ box.innerHTML='<div class="hint">Nothing obvious left to lose, darling. You have overpacked with genuinely impressive discipline.</div>'; return; }
+  box.innerHTML='<h4 style="font-family:var(--serif);font-size:18px;color:var(--accent-deep);margin:0 0 8px;">A few things to reconsider</h4>';
+  cuts.forEach(function(c){
+    var d=document.createElement("div"); d.style.cssText="padding:9px 0;border-bottom:1px solid rgba(120,100,80,0.08);font-size:15px;display:flex;align-items:center;gap:12px;";
+    var txt=document.createElement("div"); txt.style.flex="1"; txt.innerHTML='<b>'+c.label+'</b><span style="color:var(--soft);">, '+c.why+' (about '+(Math.round(c.w/100)/10)+' kg)</span>';
+    var rm=document.createElement("button"); rm.className="btn btn-ghost"; rm.style.cssText="padding:8px 15px;font-size:13px;white-space:nowrap;"; rm.textContent="Lose it";
+    rm.onclick=function(){ if(c.dup) removeDup(c.colour,c.norm); else removeListItem(c.cat,c.label); renderReality(); };
+    d.appendChild(txt); d.appendChild(rm); box.appendChild(d);
+  });
+}
+var cutsOpen=false;
+function renderReality(){
+  var host=el("reality-host"); if(!host) return; host.innerHTML="";
+  if(!state.bags.length){ host.innerHTML='<div class="hint">Pick your bags and I will tell you the damage, darling.</div>'; return; }
+  var cap=state.bags.reduce(function(s,k){ var b=BAGS.filter(function(x){return x.key===k;})[0]; return {vol:s.vol+(b?b.vol:0), kg:s.kg+(b?b.kg:0)}; },{vol:0,kg:0});
+  var load=computeLoad();
+  var fullness=Math.round(load.volume/cap.vol*100);
+  var estKg=Math.round(load.weight*10)/10;
+  var finalKg=Math.round(load.weight*1.12*10)/10;
+  var wiggle=Math.round((cap.kg-finalKg)*10)/10;
+  var overW=finalKg>cap.kg;
+  var overV=fullness>100; var barPct=Math.min(fullness,120);
+  var barColour=fullness>100?"#C24B4B":(fullness>88?"var(--accent)":"var(--sage)");
+  var msg=fullness>100?("Darling. We have a problem. Your case is approximately "+fullness+" percent full.")
+        :fullness>88?("Snug, at "+fullness+" percent. You will have to sit on it, but it will close.")
+        :("A civilised "+fullness+" percent full. Room for whatever you inevitably buy there.");
+  var html='<div class="progresslabel">Space used</div><div class="progress"><span style="width:'+barPct+'%;background:'+barColour+';"></span></div>';
+  html+='<p style="font-size:15px;margin:0 0 14px;">'+msg+'</p>';
+  html+='<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:4px;"><div class="pill">est. <b>'+estKg+' kg</b></div><div class="pill">likely final <b>'+finalKg+' kg</b></div><div class="pill">allowance <b>'+cap.kg+' kg</b></div><div class="pill">'+(wiggle>=0?"wiggle room <b>"+wiggle+" kg</b>":"over by <b>"+Math.abs(wiggle)+" kg</b>")+'</div></div>';
+  if(overW) html+='<p style="font-size:15px;color:#B24A3A;font-style:italic;margin:10px 0 0;">That is over the weight limit, darling. Airport bins are not a packing strategy. Something has to go.</p>';
+  if(!overV && !overW && cutsOpen) html+='<p style="font-size:15px;color:var(--sage);font-style:italic;margin:10px 0 0;">There we go. Under the line and still fabulous.</p>';
+  host.innerHTML=html;
+  if(overV||overW){
+    var cutsBox=document.createElement("div"); cutsBox.style.marginTop="14px";
+    if(cutsOpen){ renderCuts(cutsBox); host.appendChild(cutsBox); }
+    else {
+      var btn=document.createElement("button"); btn.className="btn btn-ghost"; btn.style.marginTop="14px"; btn.textContent="Find things to lose";
+      btn.onclick=function(){ cutsOpen=true; renderReality(); };
+      host.appendChild(btn);
+    }
+  } else { cutsOpen=false; }
+}
+
+/* ---------- render ---------- */
+var checkRows={};
+function saveChecks(){ store.set("valise_current",state.list); }
+function condLabel(){
+  var m={hot:"hot",warm:"warm",mild:"mild",cold:"cold"};
+  return (m[state.climate]||"mild")+(state.rainLikely?", rain likely":"");
+}
+function renderResult(){
+  var r=state.list; if(!r){ el("result").innerHTML=""; return; }
+  var out=el("result"); out.innerHTML="";
+
+  // trip summary
+  var pers=PERS.filter(function(x){return x.key===state.personality;})[0];
+  var sum=document.createElement("div"); sum.className="trip-summary";
+  var destName=state.dest?state.dest.replace(/</g,"&lt;"):"Your trip";
+  sum.innerHTML='<div class="dest">'+destName+'</div>'+
+    '<div class="meta">'+state.days+(state.days===1?" day":" days")+' &middot; '+condLabel()+' &middot; '+(pers?pers.label.toLowerCase():"sensible")+'</div>'+
+    '<div class="counts">'+
+      '<div class="pill"><b>'+r.pieces+'</b> pieces</div>'+
+      '<div class="pill">about <b>'+r.outfits+'</b> outfits</div>'+
+      (r.laundry?'<div class="pill"><b>1</b> mid-trip wash</div>':'')+
+    '</div>';
+  out.appendChild(sum);
+
+  // the suitcase reality check
+  var rc=document.createElement("div"); rc.className="card";
+  rc.innerHTML='<h2 class="step">The suitcase reality check</h2><p class="hint">Which bags are you taking? Pick all of them, we both know it is rarely one.</p><div class="chips" id="bag-chips"></div><div id="reality-host" style="margin-top:16px;"></div>';
+  out.appendChild(rc);
+  chipRow("bag-chips", BAGS.map(function(b){return {key:b.key,label:b.label};}), function(k){return has(state.bags,k);}, function(k){ var i=state.bags.indexOf(k); if(i>-1)state.bags.splice(i,1); else state.bags.push(k); renderReality(); });
+  renderReality();
+
+  // alerts
+  if(r.alerts&&r.alerts.length){
+    var al=document.createElement("div"); al.className="alerts";
+    al.innerHTML='<h3>Darling, a word</h3><ul>'+r.alerts.map(function(a){return "<li>"+a+"</li>";}).join("")+'</ul>';
+    out.appendChild(al);
+  }
+
+  // your pieces and outfits
+  var pcard=document.createElement("div"); pcard.className="card";
+  pcard.innerHTML='<h2 class="step">Your pieces and outfits</h2><p class="hint">Optional, but this is where it gets clever. Add your actual clothes and I will build your outfits and catch your doubles.</p><div class="rulerow"><input type="text" id="piece-input" placeholder="e.g. black trousers, white knit, trench coat" /><button class="btn btn-ghost" id="piece-add" type="button">Add</button></div><div id="pieces-host" style="margin-top:14px;"></div>';
+  out.appendChild(pcard);
+  el("piece-add").onclick=function(){ var v=el("piece-input").value.trim(); if(!v)return; var flag=addPiece(v); el("piece-input").value=""; renderPieces(); if(el("reality-host")) renderReality(); if(flag){ var fb=el("piece-flag"); if(fb) fb.textContent=flag; } };
+  el("piece-input").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); el("piece-add").click(); } });
+  renderPieces();
+
+  // checklist
+  var card=document.createElement("div"); card.className="card";
+  card.innerHTML='<h2 class="step">Your packing list</h2><p class="hint">Tick as it goes in, darling. Saved on this device, so you can procrastinate packing over several evenings like the rest of us.</p><div class="progresslabel" id="plabel"></div><div class="progress"><span id="pbar"></span></div>';
+  checkRows={};
+  Object.keys(r.list).forEach(function(cat){
+    var block=document.createElement("div"); block.className="catblock"; block.innerHTML='<h4>'+cat+'</h4>';
+    r.list[cat].forEach(function(entry){
+      var label=typeof entry==="string"?entry:entry.label;
+      var quip=typeof entry==="object"?entry.quip:null;
+      var checked=typeof entry==="object"&&entry.checked;
+      var row=document.createElement("label"); row.className="checkitem"+(checked?" done":"");
+      var cb=document.createElement("input"); cb.type="checkbox"; cb.checked=!!checked;
+      var bodyd=document.createElement("div"); bodyd.className="body";
+      var sp=document.createElement("span"); sp.textContent=label; bodyd.appendChild(sp);
+      if(quip){ var qd=document.createElement("div"); qd.className="quip"; qd.textContent=quip; bodyd.appendChild(qd); }
+      cb.onchange=function(){
+        var arr=r.list[cat];
+        for(var i=0;i<arr.length;i++){
+          var lab=typeof arr[i]==="string"?arr[i]:arr[i].label;
+          if(lab===label){ arr[i]={label:lab,checked:cb.checked}; if(quip)arr[i].quip=quip; }
+        }
+        row.classList.toggle("done",cb.checked); saveChecks(); updateProgress();
+      };
+      var xb=document.createElement("button"); xb.className="removecard"; xb.type="button"; xb.innerHTML="&times;"; xb.setAttribute("aria-label","remove "+label); xb.style.marginLeft="auto";
+      xb.onclick=function(ev){ ev.preventDefault(); ev.stopPropagation();
+        var arr=r.list[cat];
+        for(var i=0;i<arr.length;i++){ var lab=typeof arr[i]==="string"?arr[i]:arr[i].label; if(lab===label){ arr.splice(i,1); break; } }
+        delete checkRows[cat+"||"+label];
+        row.remove(); saveChecks(); updateProgress(); if(el("reality-host")) renderReality();
+      };
+      checkRows[cat+"||"+label]=row;
+      row.appendChild(cb); row.appendChild(bodyd); row.appendChild(xb); block.appendChild(row);
+    });
+    card.appendChild(block);
+  });
+  out.appendChild(card);
+
+  var row=document.createElement("div"); row.className="btnrow";
+  var copyBtn=document.createElement("button"); copyBtn.className="btn btn-ghost"; copyBtn.textContent="Copy the list";
+  copyBtn.onclick=function(){ copyList(copyBtn); };
+  var newBtn=document.createElement("button"); newBtn.className="btn btn-ghost"; newBtn.textContent="Start a new trip";
+  newBtn.onclick=function(){ state.list=null; store.set("valise_current",null); el("result").innerHTML=""; window.scrollTo({top:0,behavior:"smooth"}); };
+  row.appendChild(copyBtn); row.appendChild(newBtn); out.appendChild(row);
+  updateProgress();
+}
+function countItems(){ var total=0,done=0; Object.keys(state.list.list).forEach(function(cat){ state.list.list[cat].forEach(function(e){ total++; if(typeof e==="object"&&e.checked)done++; }); }); return {total:total,done:done}; }
+function updateProgress(){ var c=countItems(); var pct=c.total?Math.round(c.done/c.total*100):0; var bar=el("pbar"),lab=el("plabel"); if(bar)bar.style.width=pct+"%"; if(lab)lab.textContent="Packed "+c.done+" of "+c.total; }
+function copyList(btn){
+  var lines=[]; if(state.dest)lines.push("Packing for "+state.dest); lines.push(state.days+" days, "+condLabel()); lines.push("");
+  Object.keys(state.list.list).forEach(function(cat){ lines.push(cat.toUpperCase()); state.list.list[cat].forEach(function(e){ lines.push("- "+(typeof e==="string"?e:e.label)); }); lines.push(""); });
+  var text=lines.join("\n");
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){ btn.textContent="Copied, darling"; setTimeout(function(){btn.textContent="Copy the list";},1500); }); }
+  else prompt("Copy your list:",text);
+}
+
+el("build").onclick=function(){
+  if(!state.tripType){ el("q-card").hidden=true; }
+  state.list=generate(); saveChecks(); renderResult();
+  el("result").scrollIntoView({behavior:"smooth",block:"start"});
+};
+
+renderRules();
+var saved=store.get("valise_current");
+if(saved&&saved.list){ state.list=saved; renderResult(); }
+</script>
+</body>
+</html>
