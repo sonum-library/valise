@@ -15,12 +15,14 @@
     --bg:#F6F0E8; --panel:#FFFDF9; --ink:#3E3830; --soft:#8A8072;
     --line:rgba(120,100,80,0.18); --accent:#C2795B; --accent-deep:#A85F44;
     --sage:#8A9A7B; --radius:16px; --shadow:0 20px 46px -26px rgba(120,90,60,0.4);
+    --bgA:#FBF4EA; --bgB:#F3EBDD; --bgC1:#F6F0E8; --bgC2:#F1E9DC;
     --font:"Jost",-apple-system,BlinkMacSystemFont,sans-serif; --serif:"Fraunces",Georgia,serif;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{font-family:var(--font);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased;
-    background:radial-gradient(120% 80% at 12% 0%, #FBF4EA 0%, transparent 55%),radial-gradient(120% 80% at 92% 8%, #F3EBDD 0%, transparent 50%),linear-gradient(180deg,#F6F0E8 0%,#F1E9DC 100%);
+    background:radial-gradient(120% 80% at 12% 0%, var(--bgA) 0%, transparent 55%),radial-gradient(120% 80% at 92% 8%, var(--bgB) 0%, transparent 50%),linear-gradient(180deg,var(--bgC1) 0%,var(--bgC2) 100%);
+    transition:background .5s ease;
     background-attachment:fixed;min-height:100vh;}
   .wrap{max-width:760px;margin:0 auto;padding:30px 18px 90px;}
   header{text-align:center;margin-bottom:24px;}
@@ -88,7 +90,7 @@
   .catblock h4{font-family:var(--serif);font-size:18px;color:var(--accent-deep);margin:0 0 8px;font-weight:600;}
   .checkitem{display:flex;align-items:flex-start;gap:11px;padding:9px 4px;border-bottom:1px solid rgba(120,100,80,0.08);cursor:pointer;}
   .checkitem:last-child{border-bottom:none;}
-  .checkitem input{width:20px;height:20px;accent-color:var(--sage);cursor:pointer;flex-shrink:0;margin-top:2px;}
+  .checkitem input[type=checkbox]{width:20px;height:20px;accent-color:var(--sage);cursor:pointer;flex-shrink:0;margin-top:2px;}
   .checkitem .body{flex:1;}
   .checkitem .body span{font-size:16px;}
   .checkitem.done .body span{color:var(--soft);text-decoration:line-through;}
@@ -96,6 +98,9 @@
   .checkitem.done .quip{display:block;}
   .pill{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:14px;}
   .pill b{color:var(--accent-deep);}
+  .removecard{appearance:none;border:none;background:none;color:var(--soft);font-size:19px;cursor:pointer;line-height:1;padding:0 6px;flex-shrink:0;}
+  .removecard:hover{color:#b26a8d;}
+  .qtybox{width:68px;min-width:68px;margin-left:10px;font-family:var(--font);font-size:16px;font-weight:600;text-align:center;color:var(--ink);background:#FFFFFF;border:1.5px solid var(--accent);border-radius:8px;padding:7px 6px;-webkit-appearance:none;appearance:textfield;}
   @media (max-width:520px){ .wordmark{font-size:32px;} }
 </style>
 </head>
@@ -103,7 +108,7 @@
 <div class="wrap">
   <header>
     <h1 class="wordmark"><span class="g">&#9992;</span> valise</h1>
-    <div class="tagline">tell me the trip, darling, i will handle the case</div>
+    <div class="tagline">tell me the trip, darling, i will handle the case <svg width="19" height="17" viewBox="0 0 24 22" aria-hidden="true" style="vertical-align:-2px;margin-left:3px;"><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" fill="none" stroke="var(--accent-deep)" stroke-width="2"/><rect x="2" y="6" width="20" height="14" rx="3" fill="var(--accent)"/><line x1="7.5" y1="6" x2="7.5" y2="20" stroke="var(--bgC1)" stroke-width="1.4"/><line x1="16.5" y1="6" x2="16.5" y2="20" stroke="var(--bgC1)" stroke-width="1.4"/></svg></div>
   </header>
 
   <div class="card">
@@ -120,6 +125,10 @@
       <button class="btn btn-ghost" id="wx" type="button">Check the weather there</button>
       <span id="wxout" style="font-size:14px;color:var(--soft);font-style:italic;"></span>
     </div>
+    <label class="lbl">or set the weather yourself</label>
+    <div class="chips" id="climate-chips"></div>
+    <div class="chips" id="wx-chips" style="margin-top:8px;"></div>
+
     <label class="lbl" for="days">how many days?</label>
     <div class="daysrow">
       <input type="range" id="days" min="1" max="21" value="5" />
@@ -169,8 +178,31 @@ var TYPES=[
   {key:"ski",label:"Ski trip",climate:"cold"},
   {key:"family",label:"Visiting family",climate:"mild"},
   {key:"romantic",label:"Romantic getaway",climate:"warm"},
+  {key:"spa",label:"Resort & spa",climate:"warm"},
+  {key:"camping",label:"Camping",climate:"mild"},
+  {key:"allinc",label:"All-inclusive",climate:"hot"},
   {key:"unsure",label:"No idea, just help me",climate:"mild"}
 ];
+var THEMES={
+  beach:{a:"#C2795B",d:"#A85F44",bgA:"#FBF4EA",bgB:"#F3EBDD",c1:"#F6F0E8",c2:"#F1E9DC"},
+  city:{a:"#8E82BE",d:"#6E62A0",bgA:"#F4F1FA",bgB:"#EAE5F4",c1:"#F2EFF8",c2:"#E9E4F2"},
+  business:{a:"#48628C",d:"#374F76",bgA:"#EEF1F6",bgB:"#E7EBF2",c1:"#EDF0F5",c2:"#E6EAF1"},
+  wedding:{a:"#B99A55",d:"#9C7F3E",bgA:"#FBF7EC",bgB:"#F6F0DF",c1:"#FAF6ED",c2:"#F4EEDC"},
+  romantic:{a:"#C97B93",d:"#AD5F7A",bgA:"#FBF1F4",bgB:"#F7E7ED",c1:"#FAF0F3",c2:"#F5E7EC"},
+  adventure:{a:"#4F7350",d:"#3B5A3C",bgA:"#F0F4EE",bgB:"#E6EDE3",c1:"#EEF3EC",c2:"#E5ECE2"},
+  ski:{a:"#B84A4A",d:"#9C3838",bgA:"#F8FAFC",bgB:"#EFF3F7",c1:"#F7F8FA",c2:"#ECF0F4"},
+  family:{a:"#C29A3B",d:"#A57F26",bgA:"#FCF7E8",bgB:"#F8F0D8",c1:"#FBF6E7",c2:"#F6EFD8"},
+  spa:{a:"#8A9A7B",d:"#6F8060",bgA:"#F1F4ED",bgB:"#E8EEE2",c1:"#EFF2EB",c2:"#E7EDE0"},
+  camping:{a:"#8B6A4F",d:"#6F5238",bgA:"#F5EFE7",bgB:"#EEE6D9",c1:"#F3EDE4",c2:"#EBE3D6"},
+  allinc:{a:"#4E9A94",d:"#3A7B76",bgA:"#ECF5F4",bgB:"#E1EFED",c1:"#EAF4F2",c2:"#DFEDEA"},
+  unsure:{a:"#5F5C66",d:"#45434D",bgA:"#F1F1F3",bgB:"#E8E8EB",c1:"#F0F0F2",c2:"#E6E6E9"}
+};
+function applyTheme(k){
+  var th=THEMES[k]||THEMES.unsure; var r=document.documentElement.style;
+  r.setProperty("--accent",th.a); r.setProperty("--accent-deep",th.d);
+  r.setProperty("--bgA",th.bgA); r.setProperty("--bgB",th.bgB);
+  r.setProperty("--bgC1",th.c1); r.setProperty("--bgC2",th.c2);
+}
 var PERS=[
   {key:"minimalist",label:"Minimalist",mult:0.85},
   {key:"sensible",label:"Sensible",mult:1.0},
@@ -184,7 +216,7 @@ var PLUGS={US:"type A and B",CA:"type A and B",JP:"type A and B",MX:"type A and 
   AU:"type I",NZ:"type I",CN:"type I and A",
   IN:"type D and M",TH:"type A and C",AE:"type G",ZA:"type M and N",BR:"type N",AR:"type I"};
 
-var state={dest:"",countryCode:"",countryName:"",days:5,climate:"mild",intl:false,
+var state={dest:"",countryCode:"",countryName:"",days:5,climate:"mild",intl:false,snow:false,rainLikely:false,lastFlag:"",
   tripType:"",personality:"sensible",answers:{},rules:store.get("valise_rules")||[],myItems:store.get("valise_items")||[],bags:[],list:null};
 
 function el(id){return document.getElementById(id);}
@@ -201,7 +233,13 @@ function chipRow(id,opts,getSel,onPick){
     wrap.appendChild(b);
   });
 }
-chipRow("type-chips",TYPES,function(k){return state.tripType===k;},function(k){ state.tripType=k; var t=TYPES.filter(function(x){return x.key===k;})[0]; if(t)state.climate=t.climate; renderQuestions(); });
+chipRow("type-chips",TYPES,function(k){return state.tripType===k;},function(k){ state.tripType=k; var t=TYPES.filter(function(x){return x.key===k;})[0]; if(t)state.climate=t.climate; applyTheme(k); paintClimate(); renderQuestions(); });
+var CLIM_OPTS=[{key:"hot",label:"Hot"},{key:"warm",label:"Warm"},{key:"mild",label:"Mild"},{key:"cold",label:"Cold"}];
+var WX_OPTS=[{key:"rain",label:"Rainy"},{key:"snow",label:"Snowy"}];
+function paintClimate(){
+  chipRow("climate-chips",CLIM_OPTS,function(k){return state.climate===k;},function(k){ state.climate=k; });
+  chipRow("wx-chips",WX_OPTS,function(k){return k==="rain"?!!state.rainLikely:!!state.snow;},function(k){ if(k==="rain")state.rainLikely=!state.rainLikely; else state.snow=!state.snow; });
+}
 chipRow("pers-chips",PERS,function(k){return state.personality===k;},function(k){ state.personality=k; });
 
 el("days").addEventListener("input",function(){ state.days=parseInt(el("days").value,10); el("daysval").textContent=state.days+(state.days===1?" day":" days"); });
@@ -213,8 +251,11 @@ function questionSet(){
   var t=state.tripType, qs=[];
   qs.push({id:"laptop",q:"The laptop, honestly?",yes:"Bringing it",no:"Switching off",def:t==="business"});
   qs.push({id:"gym",q:"Actually going to the gym? Be honest.",yes:"Yes, really",no:"No chance",def:(t==="adventure"||t==="ski")});
-  if(t==="beach") qs.push({id:"swim",q:"In the water, or there for the aperol?",yes:"Swimming",no:"Just the aperol",def:true});
-  if(t==="wedding"||t==="romantic"||t==="city"||t==="business"||t==="beach"||state.intl) qs.push({id:"evenings",q:"Your evenings?",yes:"Out out",no:"Room service",def:(t==="wedding"||t==="romantic"||t==="beach")});
+  if(t==="beach"||t==="allinc") qs.push({id:"swim",q:"In the water, or there for the aperol?",yes:"Swimming",no:"Just the aperol",def:true});
+  if(t==="spa") qs.push({id:"pool",q:"In the pool, or strictly treatments?",yes:"Pool too",no:"Treatments only",def:true});
+  if(t==="camping") qs.push({id:"tent",q:"A proper tent, or glamping?",yes:"Proper tent",no:"Glamping",def:true});
+  if(t==="family"||t==="allinc"||t==="camping"||t==="spa") qs.push({id:"group",q:"Others joining?",yes:"Group trip",no:"Just us",def:(t==="allinc")});
+  if(t==="wedding"||t==="romantic"||t==="city"||t==="business"||t==="beach"||t==="allinc"||state.intl) qs.push({id:"evenings",q:"Your evenings?",yes:"Out out",no:"Room service",def:(t==="wedding"||t==="romantic"||t==="beach"||t==="allinc")});
   return qs;
 }
 function renderQuestions(){
@@ -273,6 +314,7 @@ function checkWeather(){
       var maxRain=Math.max.apply(null,rains.length?rains:[0]);
       state.climate=avg>=27?"hot":avg>=19?"warm":avg>=11?"mild":"cold";
       state.rainLikely=maxRain>=45;
+      paintClimate();
       var place=res.g.name+(res.g.country_code?", "+res.g.country_code:"");
       out.textContent=place+": about "+Math.round(avg)+"\u00B0C this week, so I have called it "+state.climate+(state.rainLikely?", with rain likely":"")+".";
     })
@@ -283,13 +325,15 @@ el("wx").onclick=checkWeather;
 /* ---------- generate ---------- */
 function generate(){
   var d=state.days, c=state.climate, t=state.tripType||"unsure", a=state.answers, p=state.personality;
-  var beach=t==="beach"||a.swim;
+  var beach=t==="beach"||t==="allinc"||a.swim;
   var wedding=t==="wedding";
   var smart=t==="business"||wedding;
   var nightlife=a.evenings||t==="romantic"||wedding;
   var active=a.gym||t==="adventure"||t==="ski";
   var ski=t==="ski";
-  var cosy=t==="family";
+  var cosy=t==="family"||t==="spa";
+  var poolOnly=(t==="spa"&&a.pool);
+  var group=!!a.group;
   var laptop=a.laptop;
   var walk=t==="city"||t==="adventure";
   var rain=!!state.rainLikely;
@@ -313,7 +357,7 @@ function generate(){
   else { cap.push({item:"A light layer (for AC and shade)",qty:1}); }
 
   if(active){ cap.push({item:"Activewear sets",qty:clamp(Math.ceil(Math.ceil(dEff/3)*mult),1,5)}); }
-  if(beach) cap.push({item:"Swimwear",qty:clamp(Math.ceil((Math.ceil(dEff/4)+1)*mult),1,4)});
+  if(beach||poolOnly) cap.push({item:"Swimwear",qty:clamp(Math.ceil((Math.ceil(dEff/4)+1)*mult),1,4)});
   cap.push({item:"Underwear",qty:dEff+2});
   cap.push({item:"Socks",qty:(c==="cold"||active)?dEff+1:Math.ceil(dEff/2)+2});
   cap.push({item:"Sleepwear",qty:clamp(Math.ceil(dEff/4)+1,1,3)});
@@ -329,13 +373,13 @@ function generate(){
   if(beach) shoes.push("Sandals");
   if(nightlife||smart||wedding) shoes.push("Heels or your nicer shoes");
   if(active&&!ski) shoes.push("Trainers");
-  if(ski) shoes.push("Snow boots");
+  if(ski||state.snow) shoes.push("Snow boots");
   else if(c==="cold") shoes.push("Warm boots");
   if(walk) shoes.push("Broken-in walking shoes");
   if(p==="feral") shoes.push("The extra pair you are bringing anyway");
   list["Shoes"]=shoes;
 
-  var skin=["Cleanser","Moisturiser","SPF (every day)","Serums and actives","Micellar or toner","Toothbrush and paste","Deodorant","Haircare","Any makeup you actually wear","Cotton pads and buds"];
+  var skin=["Cleanser","Moisturiser","SPF (every day)","Serums and actives","Micellar or toner","Toothbrush and paste","Deodorant","Haircare","Any makeup you actually wear","Razor and shaving kit","Shaving cream or aftershave","Cotton pads and buds"];
   if(beach||c==="hot") skin.push("Aftersun");
   list["Toiletries and skincare"]=skin;
 
@@ -351,14 +395,25 @@ function generate(){
   var extras=["Sunglasses (two pairs, options matter)","Reusable water bottle","Medication and a small first-aid kit","A tote or day bag","Snacks for the journey"];
   if(rain) extras.push("Compact umbrella and something waterproof");
   if(c==="hot"||beach){ extras.push("Sunscreen"); extras.push("A sun hat"); }
+  if(c==="hot") extras.push("A little travel fan (optional, heroic)");
   if(beach) extras.push("A beach bag and a cover-up");
-  if(c==="cold"||ski) extras.push("Scarf, gloves and a warm hat");
+  if(c==="cold"||ski||state.snow) extras.push("Scarf, gloves and a warm hat");
+  if(state.snow&&!ski) extras.push("Something properly waterproof for the snow");
   if(ski){ extras.push("Ski goggles"); extras.push("Hand warmers"); }
   if(walk) extras.push("Blister plasters");
   if(wedding||smart) extras.push("The formal outfit, pressed and ready");
+  if(group) extras.push("Cards or a little game for the group");
+  if(t==="spa") extras.push("A book for the quiet bits");
+  if(t==="allinc") extras.push("Small notes for tips");
   if(laundry) extras.push("Travel detergent sheets (for the mid-trip wash)");
   extras.push("A laundry or shoe bag");
   list["Extras"]=extras;
+
+  if(t==="camping"){
+    list["Camp kit"]=a.tent
+      ?["Headtorch and spare batteries","Sleeping bag and mat","Bug spray","Reusable cutlery, mug and plate","A proper waterproof layer","Layers for the cold nights","Wet wipes (glamour is dead)"]
+      :["Bug spray","Layers for the cold nights","A torch, just in case","Wet wipes (still useful)"];
+  }
 
   // feral and overpacker flourishes
   if(p==="feral"){
@@ -400,6 +455,12 @@ function generate(){
     else alerts.push("Different country, likely different plugs, so an adapter made the cut. Check the socket type to be sure.");
   }
   if(beach) alerts.push("Swimwear is packed, and a cover-up with it, unless the plan is to drip through the lobby.");
+  if(c==="hot") alerts.push("A hot one, this. SPF is non-negotiable, darling. Top up or crisp up.");
+  if(state.snow) alerts.push("Snow on the menu, so the boots and the woolly arsenal are in.");
+  if(group) alerts.push("A group trip, so I slipped in something to play. Someone always suggests a game.");
+  if(t==="camping"&&a.tent) alerts.push("A proper tent. Brave. The camp kit is in, glamour sold separately.");
+  if(t==="camping"&&a.tent===false) alerts.push("Glamping. Sensible. Half the kit, all of the smugness.");
+  if(t==="spa") alerts.push("A spa trip, so everything is soft, loose and robe-adjacent. Hard trousers are banned.");
   if(rain) alerts.push("Rain is on the cards, so something waterproof earned its place. Romantic, I know.");
   if(wedding) alerts.push("It is a wedding, so the heels are in to keep the dress company. You are welcome.");
   if(ski) alerts.push("Ski trip, so thermals and goggles are handled. Frostbite is not the aesthetic.");
@@ -434,8 +495,16 @@ var GARMENTS=[
 ];
 function ucFirst(s){ return s?s.charAt(0).toUpperCase()+s.slice(1):s; }
 function parseItem(raw){
-  var s=raw.toLowerCase(); var words=s.split(/[^a-z]+/).filter(Boolean);
-  function hasWord(w){ return words.indexOf(w)>-1; }
+  var s=raw.toLowerCase(); var base=s.split(/[^a-z]+/).filter(Boolean);
+  var words={};
+  base.forEach(function(w){
+    words[w]=1;
+    if(w.length>3 && w.slice(-1)==="s" && w.slice(-2)!=="ss"){
+      words[w.slice(0,-1)]=1;
+      if(w.slice(-2)==="es") words[w.slice(0,-2)]=1;
+    }
+  });
+  function hasWord(w){ return !!words[w]; }
   var colour=""; for(var i=0;i<COLOURS.length;i++){ if(hasWord(COLOURS[i])){ colour=COLOURS[i]; break; } }
   var family="other", norm="";
   for(var g=0;g<GARMENTS.length;g++){ if(hasWord(GARMENTS[g][0])){ family=GARMENTS[g][1]; norm=GARMENTS[g][2]; break; } }
@@ -490,7 +559,7 @@ function renderPieces(){
     });
     host.appendChild(listWrap);
   }
-  var flagBox=document.createElement("div"); flagBox.id="piece-flag"; flagBox.style.cssText="margin-top:12px;font-size:14px;font-style:italic;color:var(--accent-deep);"; host.appendChild(flagBox);
+  var flagBox=document.createElement("div"); flagBox.id="piece-flag"; flagBox.style.cssText="margin-top:12px;font-size:14px;font-style:italic;color:var(--accent-deep);"; flagBox.textContent=state.lastFlag||""; host.appendChild(flagBox);
   var ob=buildOutfits();
   var op=document.createElement("div"); op.style.marginTop="18px";
   if(ob){
@@ -644,7 +713,28 @@ function renderReality(){
 
 /* ---------- render ---------- */
 var checkRows={};
+var clothingInputs={};
 function saveChecks(){ store.set("valise_current",state.list); }
+function recomputePieces(){
+  if(!state.list) return;
+  var arr=state.list.list["Clothing"]||[]; var tot=0;
+  arr.forEach(function(e){ var lab=typeof e==="string"?e:e.label; var m=lab.match(/x(\d+)\s*$/); tot+= m?parseInt(m[1],10):1; });
+  state.list.pieces=tot;
+  var pp=el("pieces-pill"); if(pp) pp.textContent=tot;
+}
+function syncPieces(){
+  if(!state.list) return;
+  var map={tops:"Tops",bottoms:"Bottoms"};
+  ["tops","bottoms","dress"].forEach(function(f){
+    var count=state.myItems.filter(function(m){return m.family===f;}).length;
+    if(!count) return;
+    var name=map[f]||null;
+    if(f==="dress"){ Object.keys(clothingInputs).forEach(function(k){ if(/dress/i.test(k)) name=k; }); }
+    var ci=name?clothingInputs[name]:null; if(!ci) return;
+    var cur=parseInt(ci.input.value,10)||0;
+    if(count>cur) ci.setQty(count);
+  });
+}
 function condLabel(){
   var m={hot:"hot",warm:"warm",mild:"mild",cold:"cold"};
   return (m[state.climate]||"mild")+(state.rainLikely?", rain likely":"");
@@ -660,7 +750,7 @@ function renderResult(){
   sum.innerHTML='<div class="dest">'+destName+'</div>'+
     '<div class="meta">'+state.days+(state.days===1?" day":" days")+' &middot; '+condLabel()+' &middot; '+(pers?pers.label.toLowerCase():"sensible")+'</div>'+
     '<div class="counts">'+
-      '<div class="pill"><b>'+r.pieces+'</b> pieces</div>'+
+      '<div class="pill"><b id="pieces-pill">'+r.pieces+'</b> pieces</div>'+
       '<div class="pill">about <b>'+r.outfits+'</b> outfits</div>'+
       (r.laundry?'<div class="pill"><b>1</b> mid-trip wash</div>':'')+
     '</div>';
@@ -684,39 +774,65 @@ function renderResult(){
   var pcard=document.createElement("div"); pcard.className="card";
   pcard.innerHTML='<h2 class="step">Your pieces and outfits</h2><p class="hint">Optional, but this is where it gets clever. Add your actual clothes and I will build your outfits and catch your doubles.</p><div class="rulerow"><input type="text" id="piece-input" placeholder="e.g. black trousers, white knit, trench coat" /><button class="btn btn-ghost" id="piece-add" type="button">Add</button></div><div id="pieces-host" style="margin-top:14px;"></div>';
   out.appendChild(pcard);
-  el("piece-add").onclick=function(){ var v=el("piece-input").value.trim(); if(!v)return; var flag=addPiece(v); el("piece-input").value=""; renderPieces(); if(el("reality-host")) renderReality(); if(flag){ var fb=el("piece-flag"); if(fb) fb.textContent=flag; } };
+  el("piece-add").onclick=function(){ var v=el("piece-input").value.trim(); if(!v)return; var flag=addPiece(v); state.lastFlag=flag||""; el("piece-input").value=""; renderPieces(); syncPieces(); if(el("reality-host")) renderReality(); };
   el("piece-input").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); el("piece-add").click(); } });
   renderPieces();
 
   // checklist
   var card=document.createElement("div"); card.className="card";
   card.innerHTML='<h2 class="step">Your packing list</h2><p class="hint">Tick as it goes in, darling. Saved on this device, so you can procrastinate packing over several evenings like the rest of us.</p><div class="progresslabel" id="plabel"></div><div class="progress"><span id="pbar"></span></div>';
-  checkRows={};
+  checkRows={}; clothingInputs={};
   Object.keys(r.list).forEach(function(cat){
     var block=document.createElement("div"); block.className="catblock"; block.innerHTML='<h4>'+cat+'</h4>';
     r.list[cat].forEach(function(entry){
       var label=typeof entry==="string"?entry:entry.label;
       var quip=typeof entry==="object"?entry.quip:null;
       var checked=typeof entry==="object"&&entry.checked;
+      var ref={v:label};
       var row=document.createElement("label"); row.className="checkitem"+(checked?" done":"");
       var cb=document.createElement("input"); cb.type="checkbox"; cb.checked=!!checked;
       var bodyd=document.createElement("div"); bodyd.className="body";
-      var sp=document.createElement("span"); sp.textContent=label; bodyd.appendChild(sp);
+      var sp=document.createElement("span");
+      var qm=(cat==="Clothing")?label.match(/^(.*?)\s+x(\d+)$/):null;
+      if(qm){
+        sp.textContent=qm[1]; bodyd.appendChild(sp);
+        var qtyInput=document.createElement("input"); qtyInput.type="number"; qtyInput.min="0"; qtyInput.max="40"; qtyInput.value=qm[2]; qtyInput.className="qtybox";
+        qtyInput.addEventListener("click",function(ev){ ev.preventDefault(); ev.stopPropagation(); });
+        qtyInput.addEventListener("change",function(ev){
+          ev.stopPropagation();
+          var n=Math.max(0,parseInt(qtyInput.value,10)||0); qtyInput.value=n;
+          var arr=r.list[cat];
+          for(var i=0;i<arr.length;i++){
+            var lab=typeof arr[i]==="string"?arr[i]:arr[i].label;
+            if(lab===ref.v){
+              var nl=qm[1]+"  x"+n;
+              if(typeof arr[i]==="string") arr[i]=nl; else arr[i].label=nl;
+              delete checkRows[cat+"||"+ref.v]; ref.v=nl; checkRows[cat+"||"+ref.v]=row;
+              break;
+            }
+          }
+          saveChecks(); recomputePieces(); if(el("reality-host")) renderReality();
+        });
+        bodyd.appendChild(qtyInput);
+        clothingInputs[qm[1]]={input:qtyInput,setQty:function(n){ qtyInput.value=n; qtyInput.dispatchEvent(new Event("change")); }};
+      } else {
+        sp.textContent=label; bodyd.appendChild(sp);
+      }
       if(quip){ var qd=document.createElement("div"); qd.className="quip"; qd.textContent=quip; bodyd.appendChild(qd); }
       cb.onchange=function(){
         var arr=r.list[cat];
         for(var i=0;i<arr.length;i++){
           var lab=typeof arr[i]==="string"?arr[i]:arr[i].label;
-          if(lab===label){ arr[i]={label:lab,checked:cb.checked}; if(quip)arr[i].quip=quip; }
+          if(lab===ref.v){ var q2=(typeof arr[i]==="object"&&arr[i].quip)?arr[i].quip:quip; arr[i]={label:ref.v,checked:cb.checked}; if(q2)arr[i].quip=q2; }
         }
         row.classList.toggle("done",cb.checked); saveChecks(); updateProgress();
       };
-      var xb=document.createElement("button"); xb.className="removecard"; xb.type="button"; xb.innerHTML="&times;"; xb.setAttribute("aria-label","remove "+label); xb.style.marginLeft="auto";
+      var xb=document.createElement("button"); xb.className="removecard"; xb.type="button"; xb.innerHTML="&times;"; xb.setAttribute("aria-label","remove "+label);
       xb.onclick=function(ev){ ev.preventDefault(); ev.stopPropagation();
         var arr=r.list[cat];
-        for(var i=0;i<arr.length;i++){ var lab=typeof arr[i]==="string"?arr[i]:arr[i].label; if(lab===label){ arr.splice(i,1); break; } }
-        delete checkRows[cat+"||"+label];
-        row.remove(); saveChecks(); updateProgress(); if(el("reality-host")) renderReality();
+        for(var i=0;i<arr.length;i++){ var lab=typeof arr[i]==="string"?arr[i]:arr[i].label; if(lab===ref.v){ arr.splice(i,1); break; } }
+        delete checkRows[cat+"||"+ref.v]; if(qm) delete clothingInputs[qm[1]];
+        row.remove(); saveChecks(); updateProgress(); recomputePieces(); if(el("reality-host")) renderReality();
       };
       checkRows[cat+"||"+label]=row;
       row.appendChild(cb); row.appendChild(bodyd); row.appendChild(xb); block.appendChild(row);
@@ -745,13 +861,14 @@ function copyList(btn){
 
 el("build").onclick=function(){
   if(!state.tripType){ el("q-card").hidden=true; }
-  state.list=generate(); saveChecks(); renderResult();
+  state.list=generate(); state.list.ver=3; saveChecks(); renderResult();
   el("result").scrollIntoView({behavior:"smooth",block:"start"});
 };
 
+paintClimate();
 renderRules();
 var saved=store.get("valise_current");
-if(saved&&saved.list){ state.list=saved; renderResult(); }
+if(saved&&saved.list&&saved.ver===3){ state.list=saved; renderResult(); }
 </script>
 </body>
 </html>
