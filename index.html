@@ -262,6 +262,8 @@ function renderQuestions(){
   if(!state.tripType){ el("q-card").hidden=true; return; }
   el("q-card").hidden=false;
   var qs=questionSet(), wrap=el("questions"); wrap.innerHTML="";
+  var live={}; qs.forEach(function(q){ live[q.id]=1; });
+  Object.keys(state.answers).forEach(function(k){ if(!live[k]) delete state.answers[k]; });
   qs.forEach(function(q){
     if(state.answers[q.id]===undefined) state.answers[q.id]=q.def;
     var row=document.createElement("div"); row.className="qrow";
@@ -325,7 +327,8 @@ el("wx").onclick=checkWeather;
 /* ---------- generate ---------- */
 function generate(){
   var d=state.days, c=state.climate, t=state.tripType||"unsure", a=state.answers, p=state.personality;
-  var beach=t==="beach"||t==="allinc"||a.swim;
+  var swimTrip=(t==="beach"||t==="allinc");
+  var beach=swimTrip&&(a.swim!==false);
   var wedding=t==="wedding";
   var smart=t==="business"||wedding;
   var nightlife=a.evenings||t==="romantic"||wedding;
@@ -333,7 +336,8 @@ function generate(){
   var ski=t==="ski";
   var cosy=t==="family"||t==="spa";
   var poolOnly=(t==="spa"&&a.pool);
-  var group=!!a.group;
+  var groupTrip=(t==="family"||t==="allinc"||t==="camping"||t==="spa");
+  var group=groupTrip&&!!a.group;
   var laptop=a.laptop;
   var walk=t==="city"||t==="adventure";
   var rain=!!state.rainLikely;
