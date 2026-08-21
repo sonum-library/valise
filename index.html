@@ -205,6 +205,16 @@
     <div class="rules-list" id="rules-list"></div>
   </div>
 
+  <div class="card">
+    <h2 class="step">Supplements and medication</h2>
+    <p class="hint">Vitamins, prescriptions, whatever keeps you upright. Saved on this device for every trip.</p>
+    <div class="rulerow">
+      <input type="text" id="supp-input" placeholder="e.g. vitamin D, magnesium, allergy tablets" />
+      <button class="btn btn-ghost" id="supp-add" type="button">Add</button>
+    </div>
+    <div class="rules-list" id="supps-list"></div>
+  </div>
+
   <button class="btn btn-primary" id="build">Pack my case</button>
   <div class="card">
     <h2 class="step">The run-up</h2>
@@ -311,7 +321,7 @@ var PLUGS={US:"type A and B",CA:"type A and B",JP:"type A and B",MX:"type A and 
   IN:"type D and M",TH:"type A and C",AE:"type G",ZA:"type M and N",BR:"type N",AR:"type I"};
 
 var state={dest:"",countryCode:"",countryName:"",days:5,climate:"mild",intl:false,snow:false,rainLikely:false,lastFlag:"",
-  tripType:"",personality:"sensible",answers:{},rules:store.get("valise_rules")||[],myItems:store.get("valise_items")||[],bags:[],list:null,
+  tripType:"",personality:"sensible",answers:{},units:store.get("valise_units")||"C",rules:store.get("valise_rules")||[],supps:store.get("valise_supps")||[],myItems:store.get("valise_items")||[],bags:[],list:null,
   dstart:"",dend:"",flight:{},forecast:null,places:[],tripId:null};
 
 function el(id){return document.getElementById(id);}
@@ -350,7 +360,7 @@ function questionSet(){
   if(t==="beach"||t==="allinc") qs.push({id:"swim",q:"In the water, or there for the aperol?",yes:"Swimming",no:"Just the aperol",def:true});
   if(t==="spa") qs.push({id:"pool",q:"In the pool, or strictly treatments?",yes:"Pool too",no:"Treatments only",def:true});
   if(t==="camping") qs.push({id:"tent",q:"A proper tent, or glamping?",yes:"Proper tent",no:"Glamping",def:true});
-  if(t==="family"||t==="allinc"||t==="camping"||t==="spa") qs.push({id:"group",q:"Others joining?",yes:"Group trip",no:"Just us",def:(t==="allinc")});
+  qs.push({id:"group",q:"Others joining?",yes:"Group trip",no:"Solo trip",def:(t==="allinc"||t==="family"||t==="staghen"||t==="cruise"||t==="wedding")});
   if(t==="wedding"||t==="romantic"||t==="city"||t==="business"||t==="beach"||t==="allinc"||t==="cruise"||t==="staghen"||state.intl) qs.push({id:"evenings",q:"Your evenings?",yes:"Out out",no:"Room service",def:(t==="wedding"||t==="romantic"||t==="beach"||t==="allinc"||t==="staghen")});
   if(t==="cruise") qs.push({id:"formalnight",q:"Is there a formal night?",yes:"There is",no:"Thankfully not",def:true});
   if(t==="diving") qs.push({id:"owngear",q:"Your own gear, or renting?",yes:"My own",no:"Renting",def:false});
@@ -397,6 +407,21 @@ function renderRules(){
     tag.appendChild(s); tag.appendChild(x); wrap.appendChild(tag);
   });
 }
+function renderSupps(){
+  var wrap=el("supps-list"); if(!wrap) return; wrap.innerHTML="";
+  state.supps.forEach(function(r,i){
+    var tag=document.createElement("div"); tag.className="rule";
+    var s=document.createElement("span"); s.textContent=r;
+    var x=document.createElement("button"); x.innerHTML="&times;"; x.setAttribute("aria-label","remove");
+    x.onclick=function(){ state.supps.splice(i,1); store.set("valise_supps",state.supps); renderSupps(); };
+    tag.appendChild(s); tag.appendChild(x); wrap.appendChild(tag);
+  });
+}
+el("supp-add").onclick=function(){
+  var v=el("supp-input").value.trim(); if(!v)return;
+  state.supps.push(v); store.set("valise_supps",state.supps); el("supp-input").value=""; renderSupps();
+};
+el("supp-input").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); el("supp-add").click(); } });
 el("rule-add").onclick=function(){
   var v=el("rule-input").value.trim(); if(!v)return;
   state.rules.push(v); store.set("valise_rules",state.rules); el("rule-input").value=""; renderRules();
@@ -404,6 +429,10 @@ el("rule-add").onclick=function(){
 el("rule-input").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); el("rule-add").click(); } });
 
 /* ---------- weather ---------- */
+function wxSentence(){
+  var w=state.lastWx; if(!w) return "";
+  return w.place+": about "+Math.round(toUnit(w.avg))+uSym()+" this week, so I have called it "+state.climate+(state.rainLikely?", with rain likely":"")+".";
+}
 function checkWeather(){
   var q=(el("dest").value||"").trim(); var out=el("wxout");
   if(!q){ out.textContent="a destination first, darling"; return; }
@@ -428,7 +457,8 @@ function checkWeather(){
       fetchForecast(res.g.latitude,res.g.longitude);
       if(el("nearby-host")) renderNearby();
       var place=res.g.name+(res.g.country_code?", "+res.g.country_code:"");
-      out.textContent=place+": about "+Math.round(avg)+"\u00B0C this week, so I have called it "+state.climate+(state.rainLikely?", with rain likely":"")+".";
+      state.lastWx={place:place,avg:avg};
+      out.textContent=wxSentence();
     })
     .catch(function(){ out.textContent="could not reach the forecast, we will guess"; });
 }
@@ -446,8 +476,7 @@ function generate(){
   var ski=t==="ski";
   var cosy=t==="family"||t==="spa";
   var poolOnly=(t==="spa"&&a.pool);
-  var groupTrip=(t==="family"||t==="allinc"||t==="camping"||t==="spa"||t==="staghen"||t==="roadtrip"||t==="festival"||t==="cruise");
-  var group=groupTrip&&!!a.group;
+  var group=!!a.group;
   var laptop=a.laptop;
   var walk=t==="city"||t==="adventure"||t==="backpacking"||t==="festival"||t==="safari";
   var rain=!!state.rainLikely;
@@ -509,7 +538,7 @@ function generate(){
   if(state.intl){ docs.push("Travel insurance details"); docs.push("A copy of your documents"); docs.push("eSIM installed or roaming sorted"); }
   list["Documents"]=docs;
 
-  var extras=["Sunglasses (two pairs, options matter)","Reusable water bottle","Medication and a small first-aid kit","A tote or day bag","Snacks for the journey"];
+  var extras=["Sunglasses (two pairs, options matter)","Reusable water bottle","A small first-aid kit","Hand sanitizer","Antibacterial wipes","Tissues","A tote or day bag","Snacks for the journey"];
   if(rain) extras.push("Compact umbrella and something waterproof");
   if(c==="hot"||beach){ extras.push("Sunscreen"); extras.push("A sun hat"); }
   if(c==="hot") extras.push("A little travel fan (optional, heroic)");
@@ -548,6 +577,15 @@ function generate(){
     list["Your what-ifs"]=["One nicer outfit, just in case","A backup cardigan","An extra pair of sunglasses"];
   }
 
+  // supplements
+  var supp=["Any prescriptions, in their original boxes"];
+  if(state.supps&&state.supps.length) supp=supp.concat(state.supps);
+  supp.push("A pill organiser for the trip length");
+  supp.push("Painkillers and something for an upset stomach");
+  if(state.intl) supp.push("A copy of any prescription, in case you are asked");
+  if(c==="hot"||beach) supp.push("Rehydration sachets");
+  list["Supplements and medication"]=supp;
+
   // custom rules
   if(state.rules.length){ list["Your non-negotiables"]=state.rules.slice(); }
 
@@ -569,7 +607,10 @@ function generate(){
     {label:"Wallet, keys, phone, one last sweep",quip:"The holy trinity. Well done."},
     {label:"Wear the bulky things instead of packing them",quip:"Smug and space-saving. A rare combination."},
     {label:"Water bottle empty for security, then fill it",quip:"Hydrated and law-abiding."},
-    {label:"Snacks within arm's reach",quip:"You will not become a problem at hour three now."}
+    {label:"Snacks within arm's reach",quip:"You will not become a problem at hour three now."},
+    {label:"Hand sanitizer in your pocket, not the case",quip:"Thank you for admitting that cleanliness is no longer a preference."},
+    {label:"Wipes for the tray table",quip:"Wiped. Whatever lived there is no longer your problem."},
+    {label:"Tissues, because you will need them",quip:"Prepared for the sniffle you are pretending not to have."}
   ];
   list["Travel day"]=day;
 
@@ -593,6 +634,7 @@ function generate(){
   if(t==="longhaul") alerts.push("Long-haul, so medication and one change of clothes go in your hand luggage. Cases go missing, darling.");
   if(state.snow) alerts.push("Snow on the menu, so the boots and the woolly arsenal are in.");
   if(group) alerts.push("A group trip, so I slipped in something to play. Someone always suggests a game.");
+  if(a.group===false) alerts.push("Travelling solo. Good. Nobody to negotiate the itinerary with, and the whole case is yours.");
   if(t==="camping"&&a.tent) alerts.push("A proper tent. Brave. The camp kit is in, glamour sold separately.");
   if(t==="camping"&&a.tent===false) alerts.push("Glamping. Sensible. Half the kit, all of the smugness.");
   if(t==="spa") alerts.push("A spa trip, so everything is soft, loose and robe-adjacent. Hard trousers are banned.");
@@ -881,19 +923,28 @@ function renderFlightLinks(){
   if(!host.children.length) host.innerHTML='<div class="hint" style="margin:0;">Fill in where you are flying from and to, and the links appear here.</div>';
 }
 /* ---- 7 day forecast ---- */
+function toUnit(c){ return state.units==="F" ? (c*9/5+32) : c; }
+function uSym(){ return state.units==="F" ? "\u00B0F" : "\u00B0C"; }
 function renderForecast(){
   var host=el("forecast-host"); if(!host) return;
   var f=state.forecast;
   if(!f||!f.days||!f.days.length){ host.innerHTML=""; return; }
   var cells=f.days.map(function(d){
-    return '<div class="fcday"><div class="d">'+d.label+'</div><div class="t">'+Math.round(d.max)+'\u00B0</div><div class="lo">'+Math.round(d.min)+'\u00B0</div>'+(d.rain>=40?'<div class="r">'+d.rain+'% rain</div>':'')+'</div>';
+    return '<div class="fcday"><div class="d">'+d.label+'</div><div class="t">'+Math.round(toUnit(d.max))+'\u00B0</div><div class="lo">'+Math.round(toUnit(d.min))+'\u00B0</div>'+(d.rain>=40?'<div class="r">'+d.rain+'% rain</div>':'')+'</div>';
   }).join("");
   var note="";
   var spread=Math.max.apply(null,f.days.map(function(d){return d.max;}))-Math.min.apply(null,f.days.map(function(d){return d.max;}));
-  if(spread>=8) note="That is a "+Math.round(spread)+" degree swing across the week, darling. Layers, not optimism.";
+  var spreadShown=state.units==="F"?spread*9/5:spread;
+  if(spread>=8) note="That is a "+Math.round(spreadShown)+" degree swing across the week, darling. Layers, not optimism.";
   else if(f.days.some(function(d){return d.rain>=50;})) note="Rain in the forecast. Something waterproof has earned its place.";
   else note="Steady all week. A rare gift.";
-  host.innerHTML='<div class="fc">'+cells+'</div><p class="hint" style="margin:8px 0 0;">'+note+'</p>';
+  host.innerHTML='<div class="fc">'+cells+'</div>'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;">'+
+      '<span class="hint" style="margin:0;flex:1;">'+note+'</span>'+
+      '<button class="chip" id="unit-toggle" type="button">'+uSym()+'</button>'+
+    '</div>';
+  var ub=el("unit-toggle");
+  if(ub) ub.onclick=function(){ state.units=state.units==="F"?"C":"F"; store.set("valise_units",state.units); renderForecast(); if(el("wxout")&&state.lastWx) el("wxout").textContent=wxSentence(); };
 }
 function fetchForecast(lat,lon){
   return fetch("https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+"&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=7&timezone=auto&timeformat=iso8601")
@@ -1369,10 +1420,12 @@ function renderResult(){
   acard.innerHTML='<h2 class="step">When you land</h2><p class="hint">The things you always end up googling in the taxi.</p><div id="arrival-host"></div>';
   out.appendChild(acard);
 
-  // shared items
-  var scard=document.createElement("div"); scard.className="card";
-  scard.innerHTML='<h2 class="step">Who brings what</h2><div id="shared-host"></div>';
-  out.appendChild(scard);
+  // shared items, group trips only
+  if(state.answers.group){
+    var scard=document.createElement("div"); scard.className="card";
+    scard.innerHTML='<h2 class="step">Who brings what</h2><div id="shared-host"></div>';
+    out.appendChild(scard);
+  }
 
   // the suitcase reality check
   var rc=document.createElement("div"); rc.className="card";
@@ -1498,6 +1551,7 @@ el("d-end").addEventListener("change",function(){ state.dend=el("d-end").value; 
 });
 el("pp-exp").addEventListener("change",function(){ state.ppExpiry=el("pp-exp").value; renderPassport(); });
 paintClimate();
+renderSupps();
 renderCountdown();
 renderPassport();
 renderTimeline();
