@@ -109,6 +109,31 @@
   .checkitem.done .quip{display:block;}
   .pill{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:14px;}
   .pill b{color:var(--accent-deep);}
+  .vrev{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1);}
+  .vrev.von{opacity:1;transform:none;}
+  @media(prefers-reduced-motion:reduce){.vrev{opacity:1;transform:none;transition:none;}}
+  .daterow{display:flex;gap:10px;flex-wrap:wrap;}
+  .daterow>div{flex:1;min-width:140px;}
+  input[type=date]{width:100%;font-family:var(--font);font-size:16px;font-weight:600;color:var(--ink);background:#fbf7f0;border:1px solid var(--line);border-radius:10px;padding:11px 12px;}
+  input[type=date]:focus{outline:none;border-color:var(--accent);}
+  .countdown{text-align:center;padding:16px;margin-top:14px;background:linear-gradient(135deg,rgba(194,121,91,0.12),rgba(138,154,123,0.12));border:1px solid var(--line);border-radius:14px;}
+  .countdown .big{font-family:var(--serif);font-size:34px;color:var(--accent-deep);line-height:1.1;}
+  .countdown .sub{font-size:15px;color:var(--soft);font-style:italic;margin-top:2px;}
+  .fc{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;}
+  .fcday{flex:0 0 82px;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 6px;}
+  .fcday .d{font-size:13px;color:var(--soft);font-weight:700;}
+  .fcday .t{font-family:var(--serif);font-size:20px;color:var(--ink);margin:4px 0 2px;}
+  .fcday .lo{font-size:12px;color:var(--soft);}
+  .fcday .r{font-size:12px;color:var(--accent-deep);margin-top:3px;}
+  .tripcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px;margin-bottom:11px;}
+  .tripcard .tt{font-family:var(--serif);font-size:20px;color:var(--accent-deep);}
+  .tripcard .tm{font-size:14px;color:var(--soft);margin-top:2px;}
+  .tripcard .ta{display:flex;gap:10px;margin-top:11px;flex-wrap:wrap;}
+  .placeitem{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:9px;background:var(--panel);}
+  .placeitem .pn{font-weight:700;font-size:16px;}
+  .placeitem .pm{font-size:13px;color:var(--soft);margin-top:2px;}
+  .placeitem .pl{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;}
+  .kindchips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;}
   .removecard{appearance:none;border:none;background:none;color:var(--soft);font-size:19px;cursor:pointer;line-height:1;padding:0 6px;flex-shrink:0;}
   .removecard:hover{color:#b26a8d;}
   .qtybox{width:68px;min-width:68px;margin-left:10px;font-family:var(--font);font-size:16px;font-weight:600;text-align:center;color:var(--ink);background:#FFFFFF;border:1.5px solid var(--accent);border-radius:8px;padding:7px 6px;-webkit-appearance:none;appearance:textfield;}
@@ -146,6 +171,16 @@
       <div class="daysval" id="daysval">5 days</div>
     </div>
     <label class="toggle"><input type="checkbox" id="intl" /> it is an international trip</label>
+
+    <label class="lbl">when are you going?</label>
+    <div class="daterow">
+      <div><span style="font-size:13px;color:var(--soft);">leaving</span><input type="date" id="d-start" /></div>
+      <div><span style="font-size:13px;color:var(--soft);">coming home</span><input type="date" id="d-end" /></div>
+    </div>
+    <div id="countdown-host"></div>
+    <label class="lbl" for="pp-exp">passport expiry (optional)</label>
+    <input type="date" id="pp-exp" />
+    <div id="pp-host" style="margin-top:10px;"></div>
   </div>
 
   <div class="card">
@@ -171,7 +206,37 @@
   </div>
 
   <button class="btn btn-primary" id="build">Pack my case</button>
+  <div class="card">
+    <h2 class="step">The run-up</h2>
+    <p class="hint">What to do and when, so nothing lands on you at the last minute.</p>
+    <div id="timeline-host"></div>
+  </div>
+
+  <div class="card">
+    <h2 class="step">Your flight</h2>
+    <p class="hint">Optional. Keep the details here so you are not digging through your inbox at the gate.</p>
+    <div class="daterow">
+      <div><span style="font-size:13px;color:var(--soft);">from</span><input type="text" id="f-from" placeholder="London" /></div>
+      <div><span style="font-size:13px;color:var(--soft);">to</span><input type="text" id="f-to" placeholder="Lisbon" /></div>
+    </div>
+    <div class="daterow" style="margin-top:10px;">
+      <div><span style="font-size:13px;color:var(--soft);">airline</span><input type="text" id="f-airline" placeholder="TAP" /></div>
+      <div><span style="font-size:13px;color:var(--soft);">flight number</span><input type="text" id="f-num" placeholder="TP1359" /></div>
+    </div>
+    <div class="daterow" style="margin-top:10px;">
+      <div><span style="font-size:13px;color:var(--soft);">departs</span><input type="text" id="f-time" placeholder="14:05" /></div>
+      <div><span style="font-size:13px;color:var(--soft);">confirmation</span><input type="text" id="f-conf" placeholder="ABC123" /></div>
+    </div>
+    <div class="btnrow" id="flight-links"></div>
+  </div>
+
   <div id="result" style="margin-top:20px;"></div>
+
+  <div class="card" id="trips-card">
+    <h2 class="step">Your trips</h2>
+    <p class="hint">Save a trip and it waits here, packing progress and all. Saved on this device.</p>
+    <div id="trips-host"></div>
+  </div>
 </div>
 
 <script>
@@ -192,20 +257,38 @@ var TYPES=[
   {key:"spa",label:"Resort & spa",climate:"warm"},
   {key:"camping",label:"Camping",climate:"mild"},
   {key:"allinc",label:"All-inclusive",climate:"hot"},
+  {key:"cruise",label:"Cruise",climate:"warm"},
+  {key:"roadtrip",label:"Road trip",climate:"mild"},
+  {key:"backpacking",label:"Backpacking",climate:"warm"},
+  {key:"festival",label:"Festival",climate:"warm"},
+  {key:"safari",label:"Safari",climate:"hot"},
+  {key:"golf",label:"Golf trip",climate:"warm"},
+  {key:"diving",label:"Diving",climate:"hot"},
+  {key:"staghen",label:"Stag / hen do",climate:"warm"},
+  {key:"longhaul",label:"Long-haul, long stay",climate:"warm"},
   {key:"unsure",label:"No idea, just help me",climate:"mild"}
 ];
 var THEMES={
+  ski:{a:"#BA564F",d:"#A13830",bgA:"#F9F1F0",bgB:"#F3E4E3",c1:"#F7EDED",c2:"#F2E1E0"},
   beach:{a:"#C2795B",d:"#A85F44",bgA:"#FBF4EA",bgB:"#F3EBDD",c1:"#F6F0E8",c2:"#F1E9DC"},
+  camping:{a:"#9F7656",d:"#845939",bgA:"#F8F4F1",bgB:"#F1EAE5",c1:"#F6F1EE",c2:"#EFE8E2"},
+  roadtrip:{a:"#B5914A",d:"#977530",bgA:"#F9F6F0",bgB:"#F3EEE3",c1:"#F7F4ED",c2:"#F2ECE0"},
+  wedding:{a:"#AD9E52",d:"#918236",bgA:"#F8F7F0",bgB:"#F2F0E4",c1:"#F7F5ED",c2:"#F1EEE0"},
+  family:{a:"#A3A94C",d:"#868C31",bgA:"#F8F8F0",bgB:"#F2F3E4",c1:"#F6F7ED",c2:"#F0F1E0"},
+  safari:{a:"#7D9D4D",d:"#618132",bgA:"#F5F8F1",bgB:"#ECF2E4",c1:"#F3F6EE",c2:"#EAF0E1"},
+  backpacking:{a:"#5E924F",d:"#427632",bgA:"#F3F8F1",bgB:"#E8F1E5",c1:"#F0F6EE",c2:"#E5EFE2"},
+  adventure:{a:"#4B8B54",d:"#2F6F38",bgA:"#F1F8F2",bgB:"#E5F1E7",c1:"#EEF6EF",c2:"#E2EFE4"},
+  golf:{a:"#4A966E",d:"#2F7952",bgA:"#F1F8F4",bgB:"#E4F2EB",c1:"#EEF6F2",c2:"#E1F0E8"},
+  spa:{a:"#579486",d:"#39796A",bgA:"#F2F7F6",bgB:"#E6F0EE",c1:"#EFF5F4",c2:"#E3EEEC"},
+  allinc:{a:"#46989B",d:"#2C7A7D",bgA:"#F0F8F8",bgB:"#E4F2F3",c1:"#EDF7F7",c2:"#E0F1F1"},
+  diving:{a:"#3F84A2",d:"#276682",bgA:"#F0F6F9",bgB:"#E3EEF3",c1:"#EDF4F7",c2:"#E0ECF2"},
+  cruise:{a:"#4972A2",d:"#2E5684",bgA:"#F0F4F8",bgB:"#E4EBF3",c1:"#EDF2F7",c2:"#E0E8F1"},
+  business:{a:"#526098",d:"#36447D",bgA:"#F1F2F8",bgB:"#E5E8F1",c1:"#EEF0F6",c2:"#E2E5EF"},
+  longhaul:{a:"#5E5EA1",d:"#404087",bgA:"#F2F2F7",bgB:"#E6E6F0",c1:"#EFEFF5",c2:"#E3E3EE"},
   city:{a:"#8E82BE",d:"#6E62A0",bgA:"#F4F1FA",bgB:"#EAE5F4",c1:"#F2EFF8",c2:"#E9E4F2"},
-  business:{a:"#48628C",d:"#374F76",bgA:"#EEF1F6",bgB:"#E7EBF2",c1:"#EDF0F5",c2:"#E6EAF1"},
-  wedding:{a:"#B99A55",d:"#9C7F3E",bgA:"#FBF7EC",bgB:"#F6F0DF",c1:"#FAF6ED",c2:"#F4EEDC"},
-  romantic:{a:"#C97B93",d:"#AD5F7A",bgA:"#FBF1F4",bgB:"#F7E7ED",c1:"#FAF0F3",c2:"#F5E7EC"},
-  adventure:{a:"#4F7350",d:"#3B5A3C",bgA:"#F0F4EE",bgB:"#E6EDE3",c1:"#EEF3EC",c2:"#E5ECE2"},
-  ski:{a:"#B84A4A",d:"#9C3838",bgA:"#F8FAFC",bgB:"#EFF3F7",c1:"#F7F8FA",c2:"#ECF0F4"},
-  family:{a:"#C29A3B",d:"#A57F26",bgA:"#FCF7E8",bgB:"#F8F0D8",c1:"#FBF6E7",c2:"#F6EFD8"},
-  spa:{a:"#8A9A7B",d:"#6F8060",bgA:"#F1F4ED",bgB:"#E8EEE2",c1:"#EFF2EB",c2:"#E7EDE0"},
-  camping:{a:"#8B6A4F",d:"#6F5238",bgA:"#F5EFE7",bgB:"#EEE6D9",c1:"#F3EDE4",c2:"#EBE3D6"},
-  allinc:{a:"#4E9A94",d:"#3A7B76",bgA:"#ECF5F4",bgB:"#E1EFED",c1:"#EAF4F2",c2:"#DFEDEA"},
+  festival:{a:"#9459A6",d:"#793C8B",bgA:"#F6F1F8",bgB:"#EEE5F1",c1:"#F4EEF6",c2:"#ECE2EF"},
+  staghen:{a:"#AB549F",d:"#8F3884",bgA:"#F8F1F7",bgB:"#F2E4F0",c1:"#F6EEF5",c2:"#F0E1EE"},
+  romantic:{a:"#B3567E",d:"#9B3662",bgA:"#F8F0F4",bgB:"#F3E4EA",c1:"#F7EDF1",c2:"#F1E0E7"},
   unsure:{a:"#5F5C66",d:"#45434D",bgA:"#F1F1F3",bgB:"#E8E8EB",c1:"#F0F0F2",c2:"#E6E6E9"}
 };
 function applyTheme(k){
@@ -228,7 +311,8 @@ var PLUGS={US:"type A and B",CA:"type A and B",JP:"type A and B",MX:"type A and 
   IN:"type D and M",TH:"type A and C",AE:"type G",ZA:"type M and N",BR:"type N",AR:"type I"};
 
 var state={dest:"",countryCode:"",countryName:"",days:5,climate:"mild",intl:false,snow:false,rainLikely:false,lastFlag:"",
-  tripType:"",personality:"sensible",answers:{},rules:store.get("valise_rules")||[],myItems:store.get("valise_items")||[],bags:[],list:null};
+  tripType:"",personality:"sensible",answers:{},rules:store.get("valise_rules")||[],myItems:store.get("valise_items")||[],bags:[],list:null,
+  dstart:"",dend:"",flight:{},forecast:null,places:[],tripId:null};
 
 function el(id){return document.getElementById(id);}
 function has(arr,v){return arr.indexOf(v)>-1;}
@@ -258,6 +342,7 @@ el("dest").addEventListener("input",function(){ state.dest=el("dest").value; });
 el("intl").addEventListener("change",function(){ state.intl=el("intl").checked; });
 
 /* ---------- pruning questions ---------- */
+function c_isHot(t){ return state.climate==="hot"||state.climate==="warm"||t==="beach"||t==="allinc"||t==="diving"||t==="safari"; }
 function questionSet(){
   var t=state.tripType, qs=[];
   qs.push({id:"laptop",q:"The laptop, honestly?",yes:"Bringing it",no:"Switching off",def:t==="business"});
@@ -266,7 +351,17 @@ function questionSet(){
   if(t==="spa") qs.push({id:"pool",q:"In the pool, or strictly treatments?",yes:"Pool too",no:"Treatments only",def:true});
   if(t==="camping") qs.push({id:"tent",q:"A proper tent, or glamping?",yes:"Proper tent",no:"Glamping",def:true});
   if(t==="family"||t==="allinc"||t==="camping"||t==="spa") qs.push({id:"group",q:"Others joining?",yes:"Group trip",no:"Just us",def:(t==="allinc")});
-  if(t==="wedding"||t==="romantic"||t==="city"||t==="business"||t==="beach"||t==="allinc"||state.intl) qs.push({id:"evenings",q:"Your evenings?",yes:"Out out",no:"Room service",def:(t==="wedding"||t==="romantic"||t==="beach"||t==="allinc")});
+  if(t==="wedding"||t==="romantic"||t==="city"||t==="business"||t==="beach"||t==="allinc"||t==="cruise"||t==="staghen"||state.intl) qs.push({id:"evenings",q:"Your evenings?",yes:"Out out",no:"Room service",def:(t==="wedding"||t==="romantic"||t==="beach"||t==="allinc"||t==="staghen")});
+  if(t==="cruise") qs.push({id:"formalnight",q:"Is there a formal night?",yes:"There is",no:"Thankfully not",def:true});
+  if(t==="diving") qs.push({id:"owngear",q:"Your own gear, or renting?",yes:"My own",no:"Renting",def:false});
+  if(t==="festival") qs.push({id:"camping_fest",q:"Camping on site?",yes:"On site",no:"Staying nearby",def:true});
+  if(t==="roadtrip") qs.push({id:"driving",q:"Are you driving?",yes:"I am driving",no:"Along for the ride",def:true});
+  qs.push({id:"nicedinner",q:"Is there one nice dinner?",yes:"There is",no:"No, casual",def:(t==="romantic"||t==="wedding"||t==="cruise"||t==="business")});
+  qs.push({id:"shopping",q:"Buying clothes out there?",yes:"Definitely",no:"Not planning to",def:(t==="city"||t==="longhaul")});
+  qs.push({id:"handluggage",q:"Hand luggage only?",yes:"Travelling light",no:"I check a bag",def:false});
+  qs.push({id:"rewear",q:"Do you re-wear things?",yes:"Freely",no:"Fresh every day",def:true});
+  if(c_isHot(t)) qs.push({id:"burn",q:"Do you burn or tan?",yes:"I burn",no:"I tan",def:true});
+  if(state.days>=6) qs.push({id:"laundry_ok",q:"Laundry while you are away?",yes:"Happily",no:"Absolutely not",def:true});
   return qs;
 }
 function renderQuestions(){
@@ -318,6 +413,8 @@ function checkWeather(){
     .then(function(geo){
       if(!geo.results||!geo.results.length) throw new Error("nf");
       var g=geo.results[0]; state.countryCode=g.country_code||""; state.countryName=g.country||g.name;
+      state.coords={lat:g.latitude,lon:g.longitude};
+      renderArrival();
       return fetch("https://api.open-meteo.com/v1/forecast?latitude="+g.latitude+"&longitude="+g.longitude+"&daily=temperature_2m_max,precipitation_probability_max&forecast_days=7").then(function(r){return r.json();}).then(function(wx){return {g:g,wx:wx};});
     })
     .then(function(res){
@@ -328,6 +425,8 @@ function checkWeather(){
       state.climate=avg>=27?"hot":avg>=19?"warm":avg>=11?"mild":"cold";
       state.rainLikely=maxRain>=45;
       paintClimate();
+      fetchForecast(res.g.latitude,res.g.longitude);
+      if(el("nearby-host")) renderNearby();
       var place=res.g.name+(res.g.country_code?", "+res.g.country_code:"");
       out.textContent=place+": about "+Math.round(avg)+"\u00B0C this week, so I have called it "+state.climate+(state.rainLikely?", with rain likely":"")+".";
     })
@@ -338,24 +437,27 @@ el("wx").onclick=checkWeather;
 /* ---------- generate ---------- */
 function generate(){
   var d=state.days, c=state.climate, t=state.tripType||"unsure", a=state.answers, p=state.personality;
-  var swimTrip=(t==="beach"||t==="allinc");
+  var swimTrip=(t==="beach"||t==="allinc"||t==="cruise"||t==="diving");
   var beach=swimTrip&&(a.swim!==false);
   var wedding=t==="wedding";
-  var smart=t==="business"||wedding;
+  var smart=t==="business"||wedding||!!a.nicedinner||(t==="cruise"&&a.formalnight);
   var nightlife=a.evenings||t==="romantic"||wedding;
-  var active=a.gym||t==="adventure"||t==="ski";
+  var active=a.gym||t==="adventure"||t==="ski"||t==="golf"||t==="backpacking";
   var ski=t==="ski";
   var cosy=t==="family"||t==="spa";
   var poolOnly=(t==="spa"&&a.pool);
-  var groupTrip=(t==="family"||t==="allinc"||t==="camping"||t==="spa");
+  var groupTrip=(t==="family"||t==="allinc"||t==="camping"||t==="spa"||t==="staghen"||t==="roadtrip"||t==="festival"||t==="cruise");
   var group=groupTrip&&!!a.group;
   var laptop=a.laptop;
-  var walk=t==="city"||t==="adventure";
+  var walk=t==="city"||t==="adventure"||t==="backpacking"||t==="festival"||t==="safari";
   var rain=!!state.rainLikely;
 
   var persObj=PERS.filter(function(x){return x.key===p;})[0]||PERS[1];
   var mult=persObj.mult;
-  var laundry=d>=8; var dEff=laundry?Math.ceil(d/2)+1:d;
+  if(a.handluggage) mult*=0.72;
+  if(a.rewear===false) mult*=1.18;
+  if(a.shopping) mult*=0.88;
+  var laundry=(d>=8)&&(a.laundry_ok!==false); var dEff=laundry?Math.ceil(d/2)+1:d;
 
   var cap=[];
   var tops=clamp(Math.ceil((Math.ceil(dEff*0.6)+2)*mult),3,12);
@@ -424,6 +526,15 @@ function generate(){
   extras.push("A laundry or shoe bag");
   list["Extras"]=extras;
 
+  if(t==="cruise") list["Cruise kit"]=["Formal outfit for the dressy night","Deck shoes or something flat","A light wrap for windy decks","Motion sickness bands or tablets","A lanyard for your cabin card","Swimwear for the pool deck"];
+  if(t==="diving") list["Dive kit"]=(a.owngear?["Mask, snorkel and fins","Wetsuit or rash vest","Dive computer","Logbook and certification card","Save-a-dive spare kit","Reef-safe sunscreen"]:["Certification card","Logbook","Rash vest (rentals rarely have your size)","Reef-safe sunscreen","A dry bag"]);
+  if(t==="safari") list["Safari kit"]=["Neutral colours (no bright white or black)","Binoculars","A wide-brim hat","Insect repellent with DEET","A dust-proof bag for your camera","A warm layer for dawn drives","A torch for the camp"];
+  if(t==="golf") list["Golf kit"]=["Golf shoes and spare spikes","Glove (bring two)","Balls and tees, more than you think","A collared shirt for the clubhouse","Rain jacket","A cap and sunscreen"];
+  if(t==="festival") list["Festival kit"]=(a.camping_fest?["Wellies and a waterproof","Tent, sleeping bag and mat","A power bank, then another","Dry shampoo and wet wipes","Earplugs and a sleep mask","A bum bag you can dance in","Cash for stalls","Loo roll (trust me)"]:["Wellies and a waterproof","A power bank","Earplugs","A bum bag you can dance in","Cash for stalls"]);
+  if(t==="roadtrip") list["Road kit"]=(a.driving?["Driving licence and any permit","Phone mount and car charger","An offline playlist","Snacks and a cool bag","Reusable water bottles","A blanket and a small cushion","Sunglasses for the glare"]:["An offline playlist","Snacks and a cool bag","A blanket and a small cushion","Sunglasses for the glare"]);
+  if(t==="backpacking") list["Backpacking kit"]=["A padlock for hostel lockers","A quick-dry travel towel","Flip flops for shared showers","A packable day bag","Laundry sheets and a sink plug","Earplugs and a sleep mask","A first aid kit","A universal sink stopper"];
+  if(t==="staghen") list["The occasion"]=["Whatever the group chat decreed","Something you can dance in","Flat shoes for hour four","Painkillers and rehydration sachets","Cash for the kitty","A charged phone and a power bank"];
+  if(t==="longhaul") list["Long-haul comfort"]=["Neck pillow and eye mask","Compression socks","Refillable bottle for after security","A change of clothes in your hand luggage","Lip balm and hand cream","Downloads for the flight","Any medication in your carry-on"];
   if(t==="camping"){
     list["Camp kit"]=a.tent
       ?["Headtorch and spare batteries","Sleeping bag and mat","Bug spray","Reusable cutlery, mug and plate","A proper waterproof layer","Layers for the cold nights","Wet wipes (glamour is dead)"]
@@ -471,6 +582,15 @@ function generate(){
   }
   if(beach) alerts.push("Swimwear is packed, and a cover-up with it, unless the plan is to drip through the lobby.");
   if(c==="hot") alerts.push("A hot one, this. SPF is non-negotiable, darling. Top up or crisp up.");
+  if(a.burn) alerts.push("You burn, so that is high factor, a hat, and shade between noon and three. Lobster is not a colour story.");
+  if(a.handluggage) alerts.push("Hand luggage only, so I have trimmed the quantities. Liquids under 100ml, and wear the bulky things.");
+  if(a.shopping) alerts.push("You are shopping out there, so I left room in the case. Optimistic of me, but correct.");
+  if(a.rewear===false) alerts.push("Fresh every day, so the counts went up. No judgement, only arithmetic.");
+  if(a.laundry_ok===false&&d>=8) alerts.push("No laundry, then, so you are carrying the full "+d+" days. Brave, and heavy.");
+  if(t==="safari") alerts.push("Safari, so neutral colours only. Bright white spooks the animals and black draws tsetse flies.");
+  if(t==="diving"&&!a.owngear) alerts.push("Renting gear, so I packed only the personal bits. Bring your own rash vest, the rentals never fit.");
+  if(t==="cruise"&&a.formalnight) alerts.push("A formal night on board, so the good outfit is in. Cruise ships take this seriously.");
+  if(t==="longhaul") alerts.push("Long-haul, so medication and one change of clothes go in your hand luggage. Cases go missing, darling.");
   if(state.snow) alerts.push("Snow on the menu, so the boots and the woolly arsenal are in.");
   if(group) alerts.push("A group trip, so I slipped in something to play. Someone always suggests a game.");
   if(t==="camping"&&a.tent) alerts.push("A proper tent. Brave. The camp kit is in, glamour sold separately.");
@@ -726,6 +846,469 @@ function renderReality(){
   } else { cutsOpen=false; }
 }
 
+/* ================= dates, countdown, flight, trips, nearby ================= */
+function fmtDate(s){ if(!s) return ""; var d=new Date(s+"T12:00:00"); return d.toLocaleDateString(undefined,{day:"numeric",month:"short"}); }
+function daysUntil(s){ if(!s) return null; var d=new Date(s+"T12:00:00"), t=new Date(); t.setHours(12,0,0,0); return Math.round((d-t)/86400000); }
+function syncDaysFromDates(){
+  if(state.dstart&&state.dend){
+    var a=new Date(state.dstart+"T12:00:00"), b=new Date(state.dend+"T12:00:00");
+    var n=Math.round((b-a)/86400000);
+    if(n>0&&n<=21){ state.days=n; el("days").value=n; el("daysval").textContent=n+(n===1?" day":" days"); }
+  }
+}
+function renderCountdown(){
+  var host=el("countdown-host"); if(!host) return; host.innerHTML="";
+  var n=daysUntil(state.dstart); if(n===null) return;
+  var big,sub;
+  if(n>1){ big=n+" days"; sub=(n>30?"Plenty of time. You will still pack the night before.":n>7?"Comfortably ahead. How unlike you.":"Close enough to start actually packing, darling."); }
+  else if(n===1){ big="Tomorrow"; sub="The suitcase is not going to fill itself."; }
+  else if(n===0){ big="Today"; sub="Go. Now. Have you got your passport?"; }
+  else { big="Away now"; sub="Hope it is glorious. Send a postcard."; }
+  var range=state.dstart?(fmtDate(state.dstart)+(state.dend?" to "+fmtDate(state.dend):"")):"";
+  host.innerHTML='<div class="countdown"><div class="big">'+big+'</div><div class="sub">'+sub+'</div>'+(range?'<div style="font-size:13px;color:var(--soft);margin-top:6px;">'+range+'</div>':'')+'</div>';
+}
+function renderFlightLinks(){
+  var host=el("flight-links"); if(!host) return; host.innerHTML="";
+  var f=state.flight||{};
+  function link(label,url){ var a=document.createElement("a"); a.className="btn btn-ghost"; a.href=url; a.target="_blank"; a.rel="noopener"; a.textContent=label; a.style.textDecoration="none"; host.appendChild(a); }
+  var from=(f.from||"").trim(), to=(f.to||state.dest||"").trim();
+  if(from&&to){
+    var q="https://www.google.com/travel/flights?q="+encodeURIComponent("flights from "+from+" to "+to+(state.dstart?" on "+state.dstart:""));
+    link("Search flights",q);
+  }
+  if((f.num||"").trim()) link("Track "+f.num.trim().toUpperCase(),"https://www.google.com/search?q="+encodeURIComponent(f.num.trim()+" flight status"));
+  if(to) link("Open "+to+" in Maps","https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(to));
+  if(!host.children.length) host.innerHTML='<div class="hint" style="margin:0;">Fill in where you are flying from and to, and the links appear here.</div>';
+}
+/* ---- 7 day forecast ---- */
+function renderForecast(){
+  var host=el("forecast-host"); if(!host) return;
+  var f=state.forecast;
+  if(!f||!f.days||!f.days.length){ host.innerHTML=""; return; }
+  var cells=f.days.map(function(d){
+    return '<div class="fcday"><div class="d">'+d.label+'</div><div class="t">'+Math.round(d.max)+'\u00B0</div><div class="lo">'+Math.round(d.min)+'\u00B0</div>'+(d.rain>=40?'<div class="r">'+d.rain+'% rain</div>':'')+'</div>';
+  }).join("");
+  var note="";
+  var spread=Math.max.apply(null,f.days.map(function(d){return d.max;}))-Math.min.apply(null,f.days.map(function(d){return d.max;}));
+  if(spread>=8) note="That is a "+Math.round(spread)+" degree swing across the week, darling. Layers, not optimism.";
+  else if(f.days.some(function(d){return d.rain>=50;})) note="Rain in the forecast. Something waterproof has earned its place.";
+  else note="Steady all week. A rare gift.";
+  host.innerHTML='<div class="fc">'+cells+'</div><p class="hint" style="margin:8px 0 0;">'+note+'</p>';
+}
+function fetchForecast(lat,lon){
+  return fetch("https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+"&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=7&timezone=auto&timeformat=iso8601")
+    .then(function(r){return r.json();})
+    .then(function(w){
+      var dd=w.daily||{}; var out=[];
+      (dd.time||[]).forEach(function(t,i){
+        var dt=new Date(t+"T12:00:00");
+        out.push({label:dt.toLocaleDateString(undefined,{weekday:"short"}),max:dd.temperature_2m_max[i],min:dd.temperature_2m_min[i],rain:dd.precipitation_probability_max?dd.precipitation_probability_max[i]:0});
+      });
+      if(w.utc_offset_seconds!==undefined) state.tzOffset=w.utc_offset_seconds/3600;
+      state.forecast={days:out}; renderForecast(); renderArrival(); return out;
+    }).catch(function(){ return null; });
+}
+/* ---- what is nearby ---- */
+var NEAR_KINDS=[
+  {label:"Restaurants", photon:["amenity:restaurant"], overpass:'node["amenity"="restaurant"]'},
+  {label:"Cafes",       photon:["amenity:cafe"],       overpass:'node["amenity"="cafe"]'},
+  {label:"Bars",        photon:["amenity:bar","amenity:pub"], overpass:'node["amenity"~"bar|pub"]'},
+  {label:"Sights",      photon:["tourism:attraction","tourism:museum","tourism:viewpoint"], overpass:'node["tourism"~"attraction|museum|viewpoint"]'}
+];
+var nearKind=0;
+function renderNearby(){
+  var host=el("nearby-host"); if(!host) return;
+  host.innerHTML='<div class="kindchips" id="near-chips"></div><div id="near-out"><div class="hint" style="margin:0;">Pick what you fancy and I will look around '+(state.dest||"your destination")+'.</div></div>';
+  var chips=el("near-chips");
+  NEAR_KINDS.forEach(function(k,i){
+    var b=document.createElement("button"); b.className="chip"; b.textContent=k.label;
+    b.setAttribute("aria-pressed",i===nearKind?"true":"false");
+    b.onclick=function(){ nearKind=i; renderNearby(); scanNearby(); };
+    chips.appendChild(b);
+  });
+}
+var OVERPASS_MIRRORS=[
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter"
+];
+function withTimeout(url,ms){
+  var ctrl=("AbortController" in window)?new AbortController():null;
+  var timer=setTimeout(function(){ if(ctrl) ctrl.abort(); },ms||12000);
+  var opts=ctrl?{signal:ctrl.signal}:{};
+  return fetch(url,opts).then(function(r){ clearTimeout(timer); if(!r.ok) throw new Error("status "+r.status); return r; })
+    .catch(function(e){ clearTimeout(timer); throw e; });
+}
+/* 1. Photon, a free OpenStreetMap search run by Komoot. Plain GET, browser friendly. */
+function photonNearby(lat,lon,kind){
+  var tags=kind.photon.map(function(t){return "&osm_tag="+encodeURIComponent(t);}).join("");
+  var url="https://photon.komoot.io/reverse?lat="+lat+"&lon="+lon+"&radius=10&limit=25&lang=en"+tags;
+  return withTimeout(url,11000).then(function(r){return r.json();}).then(function(d){
+    return (d.features||[]).map(function(f){
+      var p=f.properties||{}, c=(f.geometry||{}).coordinates||[];
+      if(!p.name||c.length<2) return null;
+      return {name:p.name, lat:c[1], lon:c[0],
+        meta:[p.street,p.city].filter(Boolean).join(" \u00B7 ")};
+    }).filter(Boolean);
+  });
+}
+/* 2. Overpass, via GET across mirrors. */
+function overpassTry(q,i){
+  i=i||0;
+  if(i>=OVERPASS_MIRRORS.length) return Promise.reject(new Error("all mirrors busy"));
+  var url=OVERPASS_MIRRORS[i]+"?data="+encodeURIComponent(q);
+  return withTimeout(url,12000).then(function(r){return r.text();})
+    .then(function(txt){ try{ return JSON.parse(txt); }catch(e){ throw new Error("not json"); } })
+    .catch(function(){ return overpassTry(q,i+1); });
+}
+function overpassNearby(lat,lon,kind){
+  var R=0.06, bbox=[lat-R/2,lon-R,lat+R/2,lon+R].join(",");
+  var q="[out:json][timeout:20];("+kind.overpass+"("+bbox+"););out body 40;";
+  return overpassTry(q).then(function(d){
+    return (d.elements||[]).filter(function(e){return e.tags&&e.tags.name;}).map(function(e){
+      return {name:e.tags.name, lat:e.lat, lon:e.lon,
+        meta:[e.tags.cuisine,e.tags["addr:street"]].filter(Boolean).join(" \u00B7 ")};
+    });
+  });
+}
+/* 3. Wikipedia, for sights. */
+function wikiNearby(lat,lon){
+  return withTimeout("https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord="+lat+"%7C"+lon+"&gsradius=10000&gslimit=20&format=json&origin=*",10000)
+    .then(function(r){return r.json();})
+    .then(function(d){ return ((d.query||{}).geosearch||[]).map(function(p){ return {name:p.title,lat:p.lat,lon:p.lon,meta:""}; }); });
+}
+function placeRow(p){
+  var d1=document.createElement("div"); d1.className="placeitem";
+  var gq="https://www.google.com/maps/search/?api=1&query="+p.lat+","+p.lon;
+  var ap="https://maps.apple.com/?q="+encodeURIComponent(p.name)+"&ll="+p.lat+","+p.lon;
+  d1.innerHTML='<div class="pn">'+p.name+'</div>'+(p.meta?'<div class="pm">'+p.meta+'</div>':'')+
+    '<div class="pl"><a class="link" href="'+gq+'" target="_blank" rel="noopener">Google Maps</a>'+
+    '<a class="link" href="'+ap+'" target="_blank" rel="noopener">Apple Maps</a></div>';
+  var sv=document.createElement("button"); sv.className="link"; sv.textContent="Save";
+  sv.onclick=function(){ savePlace({name:p.name,lat:p.lat,lon:p.lon}); sv.textContent="Saved"; sv.disabled=true; };
+  d1.querySelector(".pl").appendChild(sv);
+  return d1;
+}
+function mapsFallback(out){
+  var kind=NEAR_KINDS[nearKind].label.toLowerCase();
+  var g="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(kind+" near "+(state.dest||""));
+  out.innerHTML='<p style="margin:0 0 10px;">Every open map service is having a moment, darling. Go straight to the source instead.</p>'+
+    '<a class="btn btn-ghost" style="text-decoration:none;display:inline-block;" href="'+g+'" target="_blank" rel="noopener">Open '+kind+' in Google Maps</a>';
+}
+function showPlaces(out,list,note){
+  out.innerHTML=note?'<p class="hint" style="margin:0 0 10px;">'+note+'</p>':"";
+  list.slice(0,14).forEach(function(p){ out.appendChild(placeRow(p)); });
+}
+function scanNearby(){
+  var out=el("near-out"); if(!out) return;
+  if(!state.coords){ out.innerHTML='<div class="hint" style="margin:0;">Tap "Check the weather there" first so I know where we are, darling.</div>'; return; }
+  var la=state.coords.lat, lo=state.coords.lon, kind=NEAR_KINDS[nearKind];
+  out.innerHTML='<div class="hint" style="margin:0;">Having a look around...</div>';
+  photonNearby(la,lo,kind)
+    .then(function(ps){ if(!ps.length) throw new Error("empty"); showPlaces(out,ps,null); })
+    .catch(function(){
+      return overpassNearby(la,lo,kind).then(function(ps){
+        if(!ps.length) throw new Error("empty"); showPlaces(out,ps,null);
+      });
+    })
+    .catch(function(){
+      if(kind.label==="Sights"){
+        return wikiNearby(la,lo).then(function(ps){
+          if(!ps.length) throw new Error("empty");
+          showPlaces(out,ps,"From Wikipedia, since the map services are busy.");
+        });
+      }
+      throw new Error("no source");
+    })
+    .catch(function(){ mapsFallback(out); });
+}
+function savePlace(p){
+  state.places=state.places||[];
+  if(!state.places.some(function(x){return x.name===p.name;})) state.places.push(p);
+  renderSavedPlaces();
+}
+function renderSavedPlaces(){
+  var host=el("saved-places"); if(!host) return; host.innerHTML="";
+  if(!state.places||!state.places.length) return;
+  var h2=document.createElement("div"); h2.style.cssText="font-family:var(--serif);font-size:18px;color:var(--accent-deep);margin:16px 0 8px;"; h2.textContent="Saved places";
+  host.appendChild(h2);
+  state.places.forEach(function(p,i){
+    var d=document.createElement("div"); d.className="placeitem";
+    var gq="https://www.google.com/maps/search/?api=1&query="+p.lat+","+p.lon;
+    var ap="https://maps.apple.com/?q="+encodeURIComponent(p.name)+"&ll="+p.lat+","+p.lon;
+    d.innerHTML='<div class="pn">'+p.name+'</div><div class="pl"><a class="link" href="'+gq+'" target="_blank" rel="noopener">Google Maps</a><a class="link" href="'+ap+'" target="_blank" rel="noopener">Apple Maps</a></div>';
+    var rm=document.createElement("button"); rm.className="link danger"; rm.textContent="Remove";
+    rm.onclick=function(){ state.places.splice(i,1); renderSavedPlaces(); };
+    d.querySelector(".pl").appendChild(rm);
+    host.appendChild(d);
+  });
+}
+/* ---- saved trips ---- */
+function snapshotTrip(){
+  return {id:state.tripId||Date.now(), name:(state.dest||"Untitled trip"), dest:state.dest, days:state.days,
+    dstart:state.dstart, dend:state.dend, climate:state.climate, snow:state.snow, rainLikely:state.rainLikely,
+    tripType:state.tripType, personality:state.personality, answers:state.answers, intl:state.intl,
+    coords:state.coords, flight:state.flight, places:state.places, list:state.list, myItems:state.myItems};
+}
+function saveTrip(){
+  var trips=store.get("valise_trips")||[];
+  var t=snapshotTrip(); state.tripId=t.id;
+  var i=trips.findIndex(function(x){return x.id===t.id;});
+  if(i>-1) trips[i]=t; else trips.unshift(t);
+  store.set("valise_trips",trips); renderTrips();
+}
+function loadTrip(id){
+  var trips=store.get("valise_trips")||[];
+  var t=trips.filter(function(x){return x.id===id;})[0]; if(!t) return;
+  state.tripId=t.id; state.dest=t.dest||""; state.days=t.days||5; state.dstart=t.dstart||""; state.dend=t.dend||"";
+  state.climate=t.climate||"mild"; state.snow=!!t.snow; state.rainLikely=!!t.rainLikely;
+  state.tripType=t.tripType||""; state.personality=t.personality||"sensible"; state.answers=t.answers||{};
+  state.intl=!!t.intl; state.coords=t.coords||null; state.flight=t.flight||{}; state.places=t.places||[];
+  state.list=t.list||null; state.myItems=t.myItems||state.myItems;
+  el("dest").value=state.dest; el("days").value=state.days;
+  el("daysval").textContent=state.days+(state.days===1?" day":" days");
+  el("d-start").value=state.dstart; el("d-end").value=state.dend; el("intl").checked=state.intl;
+  ["from","to","airline","num","time","conf"].forEach(function(k){ var e2=el("f-"+k); if(e2) e2.value=state.flight[k]||""; });
+  if(state.tripType) applyTheme(state.tripType);
+  renderModeChips(); paintClimate(); renderQuestions(); renderCountdown(); renderFlightLinks();
+  if(state.coords) fetchForecast(state.coords.lat,state.coords.lon);
+  if(state.list) renderResult();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function renderModeChips(){
+  chipRow("type-chips",TYPES,function(k){return state.tripType===k;},function(k){ state.tripType=k; var t=TYPES.filter(function(x){return x.key===k;})[0]; if(t)state.climate=t.climate; applyTheme(k); paintClimate(); renderQuestions(); });
+  chipRow("pers-chips",PERS,function(k){return state.personality===k;},function(k){ state.personality=k; });
+}
+function renderTrips(){
+  var host=el("trips-host"); if(!host) return; host.innerHTML="";
+  var trips=store.get("valise_trips")||[];
+  if(!trips.length){ host.innerHTML='<div class="hint" style="margin:0;">No trips saved yet. Build a list and tap "Save this trip".</div>'; return; }
+  trips.forEach(function(t){
+    var d=document.createElement("div"); d.className="tripcard";
+    var n=daysUntil(t.dstart);
+    var when=t.dstart?(n>0?"in "+n+" day"+(n===1?"":"s"):n===0?"today":"past"):"no dates yet";
+    var packed="";
+    if(t.list&&t.list.list){ var tot=0,done=0; Object.keys(t.list.list).forEach(function(c){ t.list.list[c].forEach(function(e){ tot++; if(typeof e==="object"&&e.checked)done++; }); }); packed=" \u00B7 packed "+done+"/"+tot; }
+    d.innerHTML='<div class="tt">'+(t.name||"Untitled trip")+'</div><div class="tm">'+t.days+" days \u00B7 "+when+packed+'</div>';
+    var acts=document.createElement("div"); acts.className="ta";
+    var op=document.createElement("button"); op.className="btn btn-ghost"; op.textContent="Open"; op.onclick=function(){ loadTrip(t.id); };
+    var rm=document.createElement("button"); rm.className="link danger"; rm.textContent="Delete";
+    rm.onclick=function(){ if(confirm("Delete this trip?")){ store.set("valise_trips",trips.filter(function(x){return x.id!==t.id;})); renderTrips(); } };
+    acts.appendChild(op); acts.appendChild(rm); d.appendChild(acts); host.appendChild(d);
+  });
+}
+/* ---- scroll reveals ---- */
+function armReveal(){
+  if(!("IntersectionObserver" in window)) return;
+  var els=[].slice.call(document.querySelectorAll(".card,.trip-summary,.alerts,.capsule"));
+  if(!els.length) return;
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("von"); io.unobserve(e.target); } });
+  },{threshold:0.08});
+  els.forEach(function(el2){ if(!el2.classList.contains("vrev")){ el2.classList.add("vrev"); io.observe(el2); } });
+}
+
+/* ============== timeline, arrival card, passport, calendar, share ========== */
+var COUNTRY_INFO={
+ GB:{cur:"GBP",sym:"\u00A3",tip:"Service is often included; 10 to 12 percent if not",emg:"999",plug:"type G",drive:"left"},
+ IE:{cur:"EUR",sym:"\u20AC",tip:"10 percent for good service",emg:"112",plug:"type G",drive:"left"},
+ US:{cur:"USD",sym:"$",tip:"18 to 20 percent expected, always",emg:"911",plug:"type A and B",drive:"right"},
+ CA:{cur:"CAD",sym:"$",tip:"15 to 20 percent expected",emg:"911",plug:"type A and B",drive:"right"},
+ FR:{cur:"EUR",sym:"\u20AC",tip:"Service included; round up if pleased",emg:"112",plug:"type E",drive:"right"},
+ ES:{cur:"EUR",sym:"\u20AC",tip:"Small change is plenty",emg:"112",plug:"type C and F",drive:"right"},
+ PT:{cur:"EUR",sym:"\u20AC",tip:"5 to 10 percent is generous",emg:"112",plug:"type F",drive:"right"},
+ IT:{cur:"EUR",sym:"\u20AC",tip:"Cover charge is common; tipping optional",emg:"112",plug:"type F and L",drive:"right"},
+ DE:{cur:"EUR",sym:"\u20AC",tip:"Round up, or 5 to 10 percent",emg:"112",plug:"type F",drive:"right"},
+ NL:{cur:"EUR",sym:"\u20AC",tip:"Round up, or 5 to 10 percent",emg:"112",plug:"type C and F",drive:"right"},
+ GR:{cur:"EUR",sym:"\u20AC",tip:"5 to 10 percent",emg:"112",plug:"type F",drive:"right"},
+ CH:{cur:"CHF",sym:"CHF",tip:"Service included; round up",emg:"112",plug:"type J",drive:"right"},
+ AT:{cur:"EUR",sym:"\u20AC",tip:"5 to 10 percent",emg:"112",plug:"type F",drive:"right"},
+ JP:{cur:"JPY",sym:"\u00A5",tip:"Do not tip; it can cause offence",emg:"110",plug:"type A and B",drive:"left"},
+ AU:{cur:"AUD",sym:"$",tip:"Not expected; round up if you like",emg:"000",plug:"type I",drive:"left"},
+ NZ:{cur:"NZD",sym:"$",tip:"Not expected",emg:"111",plug:"type I",drive:"left"},
+ AE:{cur:"AED",sym:"AED",tip:"10 to 15 percent appreciated",emg:"999",plug:"type G",drive:"right"},
+ TH:{cur:"THB",sym:"\u0E3F",tip:"Round up; 10 percent at nicer places",emg:"191",plug:"type A and C",drive:"left"},
+ IN:{cur:"INR",sym:"\u20B9",tip:"5 to 10 percent",emg:"112",plug:"type D and M",drive:"left"},
+ MX:{cur:"MXN",sym:"$",tip:"10 to 15 percent",emg:"911",plug:"type A and B",drive:"right"},
+ ZA:{cur:"ZAR",sym:"R",tip:"10 to 15 percent",emg:"112",plug:"type M and N",drive:"left"},
+ BR:{cur:"BRL",sym:"R$",tip:"10 percent usually added",emg:"190",plug:"type N",drive:"right"},
+ MA:{cur:"MAD",sym:"MAD",tip:"5 to 10 percent",emg:"19",plug:"type C and E",drive:"right"},
+ TR:{cur:"TRY",sym:"\u20BA",tip:"5 to 10 percent",emg:"112",plug:"type C and F",drive:"right"},
+ EG:{cur:"EGP",sym:"E\u00A3",tip:"10 percent, and small notes for everything",emg:"122",plug:"type C and F",drive:"right"},
+ ID:{cur:"IDR",sym:"Rp",tip:"Often included; round up",emg:"112",plug:"type C and F",drive:"left"},
+ SG:{cur:"SGD",sym:"$",tip:"Service charge included; no need",emg:"999",plug:"type G",drive:"left"}
+};
+function renderArrival(){
+  var host=el("arrival-host"); if(!host) return;
+  var cc=state.countryCode, info=COUNTRY_INFO[cc];
+  if(!cc){ host.innerHTML='<div class="hint" style="margin:0;">Tap "Check the weather there" up top and this fills itself in.</div>'; return; }
+  var rows=[];
+  if(info){
+    rows.push(["Money",info.cur+" ("+info.sym+")"]);
+    rows.push(["Tipping",info.tip]);
+    rows.push(["Emergency",info.emg]);
+    rows.push(["Plugs",info.plug]);
+    rows.push(["They drive on the",info.drive]);
+  }
+  if(state.tzOffset!==undefined&&state.tzOffset!==null){
+    var diff=state.tzOffset-(-new Date().getTimezoneOffset()/60);
+    var t=diff===0?"the same as home":(Math.abs(diff)+" hour"+(Math.abs(diff)===1?"":"s")+(diff>0?" ahead":" behind"));
+    rows.push(["Time there",t]);
+    if(Math.abs(diff)>=4) rows.push(["Jet lag","Get into daylight on arrival and hold out until local bedtime"]);
+  }
+  if(!rows.length){ host.innerHTML='<div class="hint" style="margin:0;">I do not have an arrival card for '+(state.countryName||"there")+' yet, darling.</div>'; return; }
+  host.innerHTML=rows.map(function(r){
+    return '<div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid rgba(120,100,80,0.08);"><div style="min-width:130px;color:var(--soft);font-style:italic;">'+r[0]+'</div><div style="flex:1;">'+r[1]+'</div></div>';
+  }).join("");
+}
+/* ---- passport ---- */
+function renderPassport(){
+  var host=el("pp-host"); if(!host) return;
+  var exp=state.ppExpiry;
+  if(!exp){ host.innerHTML='<div class="hint" style="margin:0;">Add your expiry date and I will check it against the six month rule.</div>'; return; }
+  var ref=state.dend||state.dstart;
+  if(!ref){ host.innerHTML='<div class="hint" style="margin:0;">Set your travel dates and I can check this properly.</div>'; return; }
+  var e=new Date(exp+"T12:00:00"), r=new Date(ref+"T12:00:00");
+  var months=(e-r)/(1000*60*60*24*30.44);
+  var msg,col;
+  if(months<0){ msg="Your passport expires before you even travel. That is the whole trip, darling. Renew immediately."; col="#B24A3A"; }
+  else if(months<3){ msg="Only "+Math.floor(months)+" month"+(Math.floor(months)===1?"":"s")+" of validity left when you return. Many countries refuse entry under six. Renew before you go."; col="#B24A3A"; }
+  else if(months<6){ msg=Math.floor(months)+" months of validity when you get back. A lot of countries want six. Check your destination's rule, and consider renewing."; col="#A8752A"; }
+  else { msg="Comfortably valid, with "+Math.floor(months)+" months to spare. Nothing to do."; col="var(--sage)"; }
+  host.innerHTML='<p style="margin:0;font-size:16px;color:'+col+';">'+msg+'</p>';
+}
+/* ---- the run-up timeline ---- */
+function timelineItems(){
+  var intl=state.intl, t=state.tripType;
+  var L=[
+    {d:90,txt:"Check your passport is valid for six months past your return"},
+    {d:90,txt:"Check whether you need a visa or travel authorisation",only:"intl"},
+    {d:60,txt:"Book anything that sells out: restaurants, tickets, transfers"},
+    {d:45,txt:"Check whether you need any vaccinations or malaria tablets",only:"intl"},
+    {d:30,txt:"Sort travel insurance"},
+    {d:21,txt:"Book airport parking or your ride to the airport"},
+    {d:14,txt:"Tell your bank you are travelling, and check your cards"},
+    {d:14,txt:"Sort an eSIM or roaming plan",only:"intl"},
+    {d:10,txt:"Check baggage allowance for your airline"},
+    {d:7,txt:"Order any currency you want in cash",only:"intl"},
+    {d:7,txt:"Refill any prescriptions you will need"},
+    {d:3,txt:"Check in online and save the boarding pass"},
+    {d:2,txt:"Download offline maps, playlists and anything to watch"},
+    {d:2,txt:"Start the packing list properly"},
+    {d:1,txt:"Charge everything, and lay out your travel outfit"}
+  ];
+  if(t==="roadtrip") L.push({d:14,txt:"Service the car and check the tyres"});
+  if(t==="camping"||t==="festival") L.push({d:7,txt:"Test the tent and check the sleeping bag"});
+  if(t==="diving") L.push({d:30,txt:"Check your certification and dive insurance are current"});
+  if(t==="ski") L.push({d:30,txt:"Book lift passes, lessons and hire"});
+  return L.filter(function(x){ return !x.only||(x.only==="intl"&&intl); }).sort(function(a,b){return b.d-a.d;});
+}
+function renderTimeline(){
+  var host=el("timeline-host"); if(!host) return;
+  var n=daysUntil(state.dstart);
+  if(n===null){ host.innerHTML='<div class="hint" style="margin:0;">Set your travel dates and I will tell you what to do, and when.</div>'; return; }
+  var items=timelineItems();
+  var done=store.get("valise_timeline_"+(state.tripId||"cur"))||{};
+  var overdue=items.filter(function(i){return n<=i.d;});
+  var upcoming=items.filter(function(i){return n>i.d;});
+  function row(i,isNow){
+    var key=i.d+"|"+i.txt;
+    var when=n>i.d?("in "+(n-i.d)+" day"+((n-i.d)===1?"":"s")):(i.d===1?"the day before":"now");
+    var lab=document.createElement("label"); lab.className="checkitem"+(done[key]?" done":"");
+    var cb=document.createElement("input"); cb.type="checkbox"; cb.checked=!!done[key];
+    cb.onchange=function(){ done[key]=cb.checked; store.set("valise_timeline_"+(state.tripId||"cur"),done); lab.classList.toggle("done",cb.checked); };
+    var body=document.createElement("div"); body.className="body";
+    body.innerHTML='<span>'+i.txt+'</span><div style="font-size:13px;color:'+(isNow?"var(--accent-deep)":"var(--soft)")+';margin-top:2px;">'+(isNow?"due now":when)+'</div>';
+    lab.appendChild(cb); lab.appendChild(body); return lab;
+  }
+  host.innerHTML="";
+  if(overdue.length){
+    var h1=document.createElement("div"); h1.style.cssText="font-family:var(--serif);font-size:18px;color:var(--accent-deep);margin:0 0 6px;"; h1.textContent="Do these now";
+    host.appendChild(h1);
+    overdue.forEach(function(i){ host.appendChild(row(i,true)); });
+  }
+  if(upcoming.length){
+    var h2=document.createElement("div"); h2.style.cssText="font-family:var(--serif);font-size:18px;color:var(--accent-deep);margin:18px 0 6px;"; h2.textContent="Still to come";
+    host.appendChild(h2);
+    upcoming.forEach(function(i){ host.appendChild(row(i,false)); });
+  }
+}
+/* ---- calendar export ---- */
+function pad(n){ return n<10?"0"+n:""+n; }
+function icsDate(s){ return s.replace(/-/g,""); }
+function downloadICS(){
+  if(!state.dstart){ alert("Set your travel dates first, darling."); return; }
+  var end=state.dend||state.dstart;
+  var e=new Date(end+"T12:00:00"); e.setDate(e.getDate()+1);
+  var endEx=e.getFullYear()+pad(e.getMonth()+1)+pad(e.getDate());
+  var f=state.flight||{};
+  var desc=["Packed with Valise."];
+  if(f.airline||f.num) desc.push("Flight: "+[f.airline,f.num].filter(Boolean).join(" "));
+  if(f.time) desc.push("Departs: "+f.time);
+  if(f.conf) desc.push("Confirmation: "+f.conf);
+  var title=(state.dest?state.dest:"Trip")+(state.tripType?" ("+(TYPES.filter(function(x){return x.key===state.tripType;})[0]||{label:""}).label+")":"");
+  var ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Valise//EN","BEGIN:VEVENT",
+    "UID:valise-"+Date.now()+"@valise","DTSTAMP:"+new Date().toISOString().replace(/[-:]/g,"").split(".")[0]+"Z",
+    "DTSTART;VALUE=DATE:"+icsDate(state.dstart),"DTEND;VALUE=DATE:"+endEx,
+    "SUMMARY:"+title,"DESCRIPTION:"+desc.join("\\n"),
+    (state.dest?"LOCATION:"+state.dest:""),"END:VEVENT","END:VCALENDAR"].filter(Boolean).join("\r\n");
+  var blob=new Blob([ics],{type:"text/calendar"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download=(state.dest||"trip").replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".ics"; a.click();
+}
+/* ---- shared trip link ---- */
+function shareTrip(btn){
+  var p={v:1,dest:state.dest,days:state.days,ds:state.dstart,de:state.dend,tt:state.tripType,
+    pers:state.personality,cl:state.climate,intl:state.intl,fl:state.flight,pl:state.places,
+    list:state.list?state.list.list:null};
+  var enc=encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(p)))));
+  var url=location.origin+location.pathname+"#t="+enc;
+  if(navigator.share){ navigator.share({title:"Our trip, packed by Valise",url:url}).catch(function(){}); }
+  else if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(function(){ btn.textContent="Link copied"; setTimeout(function(){btn.textContent="Share this trip";},1800); }); }
+  else prompt("Copy this link:",url);
+}
+function loadSharedTrip(){
+  if(location.hash.indexOf("#t=")!==0) return false;
+  try{
+    var p=JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(location.hash.slice(3))))));
+    state.dest=p.dest||""; state.days=p.days||5; state.dstart=p.ds||""; state.dend=p.de||"";
+    state.tripType=p.tt||""; state.personality=p.pers||"sensible"; state.climate=p.cl||"mild";
+    state.intl=!!p.intl; state.flight=p.fl||{}; state.places=p.pl||[];
+    el("dest").value=state.dest; el("days").value=state.days;
+    el("daysval").textContent=state.days+(state.days===1?" day":" days");
+    el("d-start").value=state.dstart; el("d-end").value=state.dend; el("intl").checked=state.intl;
+    ["from","to","airline","num","time","conf"].forEach(function(k){ var e2=el("f-"+k); if(e2) e2.value=state.flight[k]||""; });
+    if(state.tripType) applyTheme(state.tripType);
+    renderModeChips(); paintClimate(); renderQuestions(); renderCountdown(); renderFlightLinks();
+    if(p.list){ state.list=generate(); state.list.list=p.list; state.list.ver=3; renderResult(); }
+    return true;
+  }catch(e){ return false; }
+}
+/* ---- shared / group items ---- */
+var SHARED_ITEMS=["Travel adapter","Hairdryer","First aid kit","Sunscreen","Phone chargers","Umbrella","Speaker","Cards or a little game for the group","Travel detergent sheets (for the mid-trip wash)","Reusable cutlery, mug and plate"];
+function renderShared(){
+  var host=el("shared-host"); if(!host) return;
+  if(!state.list){ host.innerHTML=""; return; }
+  var found=[];
+  Object.keys(state.list.list).forEach(function(cat){
+    state.list.list[cat].forEach(function(e){
+      var lab=typeof e==="string"?e:e.label;
+      SHARED_ITEMS.forEach(function(s){ if(lab.toLowerCase().indexOf(s.toLowerCase().slice(0,10))>-1&&found.indexOf(lab)<0) found.push(lab); });
+    });
+  });
+  if(!found.length){ host.innerHTML='<div class="hint" style="margin:0;">Nothing obviously shareable in this list.</div>'; return; }
+  var who=store.get("valise_shared")||{};
+  host.innerHTML='<p class="hint" style="margin:0 0 10px;">One between you is plenty. Say who is bringing what so you do not both pack a hairdryer.</p>';
+  found.forEach(function(lab){
+    var row=document.createElement("div"); row.style.cssText="display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(120,100,80,0.08);flex-wrap:wrap;";
+    var nm=document.createElement("div"); nm.style.flex="1"; nm.style.minWidth="150px"; nm.textContent=lab;
+    var inp=document.createElement("input"); inp.type="text"; inp.placeholder="who brings it?"; inp.value=who[lab]||"";
+    inp.style.cssText="width:150px;font-size:15px;padding:8px 10px;";
+    inp.addEventListener("input",function(){ who[lab]=inp.value; store.set("valise_shared",who); });
+    row.appendChild(nm); row.appendChild(inp); host.appendChild(row);
+  });
+}
+
 /* ---------- render ---------- */
 var checkRows={};
 var clothingInputs={};
@@ -771,12 +1354,33 @@ function renderResult(){
     '</div>';
   out.appendChild(sum);
 
+  // forecast
+  var fcard=document.createElement("div"); fcard.className="card";
+  fcard.innerHTML='<h2 class="step">The week ahead</h2><p class="hint">The actual forecast where you are going, day by day.</p><div id="forecast-host"><div class="hint" style="margin:0;">Tap "Check the weather there" up top and it appears here.</div></div>';
+  out.appendChild(fcard);
+
+  // nearby
+  var ncard=document.createElement("div"); ncard.className="card";
+  ncard.innerHTML='<h2 class="step">What is around you</h2><p class="hint">Somewhere to eat, drink, and be seen. Tap to open in your maps app.</p><div id="nearby-host"></div><div id="saved-places"></div>';
+  out.appendChild(ncard);
+
+  // arrival card
+  var acard=document.createElement("div"); acard.className="card";
+  acard.innerHTML='<h2 class="step">When you land</h2><p class="hint">The things you always end up googling in the taxi.</p><div id="arrival-host"></div>';
+  out.appendChild(acard);
+
+  // shared items
+  var scard=document.createElement("div"); scard.className="card";
+  scard.innerHTML='<h2 class="step">Who brings what</h2><div id="shared-host"></div>';
+  out.appendChild(scard);
+
   // the suitcase reality check
   var rc=document.createElement("div"); rc.className="card";
   rc.innerHTML='<h2 class="step">The suitcase reality check</h2><p class="hint">Which bags are you taking? Pick all of them, we both know it is rarely one.</p><div class="chips" id="bag-chips"></div><div id="reality-host" style="margin-top:16px;"></div>';
   out.appendChild(rc);
   chipRow("bag-chips", BAGS.map(function(b){return {key:b.key,label:b.label};}), function(k){return has(state.bags,k);}, function(k){ var i=state.bags.indexOf(k); if(i>-1)state.bags.splice(i,1); else state.bags.push(k); renderReality(); });
   renderReality();
+  renderForecast(); renderNearby(); renderSavedPlaces(); renderArrival(); renderShared();
 
   // alerts
   if(r.alerts&&r.alerts.length){
@@ -859,9 +1463,16 @@ function renderResult(){
   var row=document.createElement("div"); row.className="btnrow";
   var copyBtn=document.createElement("button"); copyBtn.className="btn btn-ghost"; copyBtn.textContent="Copy the list";
   copyBtn.onclick=function(){ copyList(copyBtn); };
+  var calBtn=document.createElement("button"); calBtn.className="btn btn-ghost"; calBtn.textContent="Add to calendar";
+  calBtn.onclick=function(){ downloadICS(); };
+  var shareBtn=document.createElement("button"); shareBtn.className="btn btn-ghost"; shareBtn.textContent="Share this trip";
+  shareBtn.onclick=function(){ shareTrip(shareBtn); };
+  var saveTripBtn=document.createElement("button"); saveTripBtn.className="btn btn-ghost"; saveTripBtn.textContent="Save this trip";
+  saveTripBtn.onclick=function(){ saveTrip(); saveTripBtn.textContent="Trip saved"; setTimeout(function(){saveTripBtn.textContent="Save this trip";},1800); };
   var newBtn=document.createElement("button"); newBtn.className="btn btn-ghost"; newBtn.textContent="Start a new trip";
-  newBtn.onclick=function(){ state.list=null; store.set("valise_current",null); el("result").innerHTML=""; window.scrollTo({top:0,behavior:"smooth"}); };
-  row.appendChild(copyBtn); row.appendChild(newBtn); out.appendChild(row);
+  newBtn.onclick=function(){ state.list=null; state.tripId=null; state.places=[]; store.set("valise_current",null); el("result").innerHTML=""; window.scrollTo({top:0,behavior:"smooth"}); };
+  row.appendChild(copyBtn); row.appendChild(calBtn); row.appendChild(shareBtn); row.appendChild(saveTripBtn); row.appendChild(newBtn); out.appendChild(row);
+  armReveal();
   updateProgress();
 }
 function countItems(){ var total=0,done=0; Object.keys(state.list.list).forEach(function(cat){ state.list.list[cat].forEach(function(e){ total++; if(typeof e==="object"&&e.checked)done++; }); }); return {total:total,done:done}; }
@@ -876,11 +1487,24 @@ function copyList(btn){
 
 el("build").onclick=function(){
   if(!state.tripType){ el("q-card").hidden=true; }
-  state.list=generate(); state.list.ver=3; saveChecks(); renderResult();
+  state.list=generate(); state.list.ver=3; saveChecks(); renderResult(); renderTimeline();
   el("result").scrollIntoView({behavior:"smooth",block:"start"});
 };
 
+el("d-start").addEventListener("change",function(){ state.dstart=el("d-start").value; syncDaysFromDates(); renderCountdown(); renderTimeline(); renderPassport(); });
+el("d-end").addEventListener("change",function(){ state.dend=el("d-end").value; syncDaysFromDates(); renderCountdown(); renderPassport(); });
+["from","to","airline","num","time","conf"].forEach(function(k){
+  var e2=el("f-"+k); if(e2) e2.addEventListener("input",function(){ state.flight[k]=e2.value; renderFlightLinks(); });
+});
+el("pp-exp").addEventListener("change",function(){ state.ppExpiry=el("pp-exp").value; renderPassport(); });
 paintClimate();
+renderCountdown();
+renderPassport();
+renderTimeline();
+renderFlightLinks();
+renderTrips();
+loadSharedTrip();
+armReveal();
 renderRules();
 var saved=store.get("valise_current");
 if(saved&&saved.list&&saved.ver===3){ state.list=saved; renderResult(); }
