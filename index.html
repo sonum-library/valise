@@ -157,10 +157,13 @@
     <h2 class="step">The basics</h2>
     <label class="lbl" for="dest">where are you going?</label>
     <input type="text" id="dest" placeholder="e.g. Lisbon, or a weekend in the Cotswolds" />
+    <div id="dest-matches" class="chips" style="margin-top:10px;"></div>
     <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;">
       <button class="btn btn-ghost" id="wx" type="button">Check the weather there</button>
-      <span id="wxout" style="font-size:14px;color:var(--soft);font-style:italic;"></span>
+      <button class="btn btn-ghost" id="whereami" type="button">Where am I?</button>
+      <span id="wxout" style="font-size:14px;color:var(--soft);font-style:italic;flex-basis:100%;"></span>
     </div>
+    <div id="home-host" style="margin-top:8px;"></div>
     <label class="lbl">or set the weather yourself</label>
     <div class="chips" id="climate-chips"></div>
     <div class="chips" id="wx-chips" style="margin-top:8px;"></div>
@@ -325,6 +328,11 @@ var state={dest:"",countryCode:"",countryName:"",days:5,climate:"mild",intl:fals
   dstart:"",dend:"",flight:{},forecast:null,places:[],tripId:null};
 
 function el(id){return document.getElementById(id);}
+function noFlightTrip(){ return state.tripType==="roadtrip"; }
+function updateRelevance(){
+  var fc=el("flight-card"); if(fc) fc.hidden=noFlightTrip();
+  var pb=el("pp-block"); if(pb) pb.hidden=noFlightTrip()||!state.intl;
+}
 function has(arr,v){return arr.indexOf(v)>-1;}
 function clamp(n,lo,hi){return Math.max(lo,Math.min(hi,n));}
 
@@ -338,7 +346,7 @@ function chipRow(id,opts,getSel,onPick){
     wrap.appendChild(b);
   });
 }
-chipRow("type-chips",TYPES,function(k){return state.tripType===k;},function(k){ state.tripType=k; var t=TYPES.filter(function(x){return x.key===k;})[0]; if(t)state.climate=t.climate; applyTheme(k); paintClimate(); renderQuestions(); });
+chipRow("type-chips",TYPES,function(k){return state.tripType===k;},function(k){ state.tripType=k; var t=TYPES.filter(function(x){return x.key===k;})[0]; if(t)state.climate=t.climate; applyTheme(k); paintClimate(); renderQuestions(); updateRelevance(); });
 var CLIM_OPTS=[{key:"hot",label:"Hot"},{key:"warm",label:"Warm"},{key:"mild",label:"Mild"},{key:"cold",label:"Cold"}];
 var WX_OPTS=[{key:"rain",label:"Rainy"},{key:"snow",label:"Snowy"}];
 function paintClimate(){
@@ -347,9 +355,9 @@ function paintClimate(){
 }
 chipRow("pers-chips",PERS,function(k){return state.personality===k;},function(k){ state.personality=k; });
 
-el("days").addEventListener("input",function(){ state.days=parseInt(el("days").value,10); el("daysval").textContent=state.days+(state.days===1?" day":" days"); });
-el("dest").addEventListener("input",function(){ state.dest=el("dest").value; });
-el("intl").addEventListener("change",function(){ state.intl=el("intl").checked; });
+el("days").addEventListener("input",function(){ state.days=parseInt(el("days").value,10); el("daysval").textContent=state.days+(state.days===1?" day":" days"); renderQuestions(); });
+el("dest").addEventListener("input",function(){ state.dest=el("dest").value; var dm=el("dest-matches"); if(dm) dm.innerHTML=""; });
+el("intl").addEventListener("change",function(){ state.intl=el("intl").checked; updateRelevance(); renderQuestions(); renderTimeline(); });
 
 /* ---------- pruning questions ---------- */
 function c_isHot(t){ return state.climate==="hot"||state.climate==="warm"||t==="beach"||t==="allinc"||t==="diving"||t==="safari"; }
@@ -433,35 +441,158 @@ function wxSentence(){
   var w=state.lastWx; if(!w) return "";
   return w.place+": about "+Math.round(toUnit(w.avg))+uSym()+" this week, so I have called it "+state.climate+(state.rainLikely?", with rain likely":"")+".";
 }
-function checkWeather(){
-  var q=(el("dest").value||"").trim(); var out=el("wxout");
-  if(!q){ out.textContent="a destination first, darling"; return; }
-  out.textContent="checking...";
-  fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(q)+"&count=1")
+/* score a geocoding result so "The Cotswolds" does not land in Hong Kong */
+var BIG_ENGLISH={GB:1,US:1,IE:1,AU:1,CA:1,NZ:1};
+function scoreMatch(g,typed){
+  var s=0, name=(g.name||"").toLowerCase(), q=typed.toLowerCase().replace(/^the\s+/,"").trim();
+  if(name===q) s+=200;
+  else if(name.indexOf(q)===0) s+=120;
+  else if(name.indexOf(q)>-1) s+=60;
+  var pop=g.population||0;
+  s+=Math.min(80,Math.log10(pop+10)*16);
+  if(BIG_ENGLISH[g.country_code]) s+=28;              // typed in English, likely means the English-speaking one
+  if(g.feature_code&&/^PPLC|^ADM1|^PPLA/.test(g.feature_code)) s+=25;
+  if(g.feature_code&&/^PPLX|^PPLL/.test(g.feature_code)) s-=20;
+  return s;
+}
+function placeLabel(g){
+  return g.name+(g.admin1?", "+g.admin1:"")+(g.country?", "+g.country:"");
+}
+function useGeo(g,typed){
+  state.countryCode=g.country_code||""; state.countryName=g.country||g.name;
+  state.coords={lat:g.latitude,lon:g.longitude};
+  state.destLabel=placeLabel(g);
+  if(!state.dest||typed) { /* keep what they typed in the box */ }
+  renderArrival(); updateHomeNote();
+  return fetch("https://api.open-meteo.com/v1/forecast?latitude="+g.latitude+"&longitude="+g.longitude+"&daily=temperature_2m_max,precipitation_probability_max&forecast_days=7")
     .then(function(r){return r.json();})
-    .then(function(geo){
-      if(!geo.results||!geo.results.length) throw new Error("nf");
-      var g=geo.results[0]; state.countryCode=g.country_code||""; state.countryName=g.country||g.name;
-      state.coords={lat:g.latitude,lon:g.longitude};
-      renderArrival();
-      return fetch("https://api.open-meteo.com/v1/forecast?latitude="+g.latitude+"&longitude="+g.longitude+"&daily=temperature_2m_max,precipitation_probability_max&forecast_days=7").then(function(r){return r.json();}).then(function(wx){return {g:g,wx:wx};});
-    })
-    .then(function(res){
-      var temps=res.wx.daily.temperature_2m_max||[]; var rains=res.wx.daily.precipitation_probability_max||[];
+    .then(function(wx){
+      var temps=(wx.daily||{}).temperature_2m_max||[], rains=(wx.daily||{}).precipitation_probability_max||[];
       if(!temps.length) throw new Error("nd");
       var avg=temps.reduce(function(a,b){return a+b;},0)/temps.length;
       var maxRain=Math.max.apply(null,rains.length?rains:[0]);
       state.climate=avg>=27?"hot":avg>=19?"warm":avg>=11?"mild":"cold";
       state.rainLikely=maxRain>=45;
       paintClimate();
-      fetchForecast(res.g.latitude,res.g.longitude);
+      fetchForecast(g.latitude,g.longitude);
       if(el("nearby-host")) renderNearby();
-      var place=res.g.name+(res.g.country_code?", "+res.g.country_code:"");
-      state.lastWx={place:place,avg:avg};
-      out.textContent=wxSentence();
-    })
-    .catch(function(){ out.textContent="could not reach the forecast, we will guess"; });
+      state.lastWx={place:placeLabel(g),avg:avg};
+      el("wxout").textContent=wxSentence();
+    });
 }
+function renderMatches(list,typed){
+  var host=el("dest-matches"); if(!host) return; host.innerHTML="";
+  if(list.length<2) return;
+  var lab=document.createElement("span");
+  lab.style.cssText="font-size:13px;color:var(--soft);font-style:italic;width:100%;margin-bottom:2px;";
+  lab.textContent="Not that one? Pick the right place:";
+  host.appendChild(lab);
+  list.slice(0,5).forEach(function(g,i){
+    var b=document.createElement("button"); b.className="chip"; b.textContent=placeLabel(g);
+    b.setAttribute("aria-pressed",i===0?"true":"false");
+    b.onclick=function(){
+      host.querySelectorAll(".chip").forEach(function(x){x.setAttribute("aria-pressed","false");});
+      b.setAttribute("aria-pressed","true");
+      el("wxout").textContent="checking...";
+      useGeo(g,true).catch(function(){ el("wxout").textContent="could not reach the forecast, we will guess"; });
+    };
+    host.appendChild(b);
+  });
+}
+/* Photon knows regions, districts and areas, which the city database does not */
+function photonSearch(q){
+  return fetch("https://photon.komoot.io/api/?q="+encodeURIComponent(q)+"&limit=8&lang=en")
+    .then(function(r){return r.json();})
+    .then(function(d){
+      return (d.features||[]).map(function(f){
+        var p=f.properties||{}, c=(f.geometry||{}).coordinates||[];
+        if(c.length<2) return null;
+        return {name:p.name||p.city||q, latitude:c[1], longitude:c[0],
+          country:p.country||"", country_code:(p.countrycode||"").toUpperCase(),
+          admin1:p.state||p.county||"", population:0,
+          feature_code:(p.osm_value==="city"||p.osm_value==="town")?"PPLA":""};
+      }).filter(Boolean);
+    });
+}
+function checkWeather(){
+  var q=(el("dest").value||"").trim(); var out=el("wxout");
+  if(!q){ out.textContent="a destination first, darling"; return; }
+  out.textContent="checking...";
+  el("dest-matches").innerHTML="";
+  var bare=q.replace(/^the\s+/i,"").trim();
+  fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(bare)+"&count=10&language=en")
+    .then(function(r){return r.json();})
+    .then(function(geo){ return (geo.results||[]); })
+    .catch(function(){ return []; })
+    .then(function(res){
+      res.sort(function(a,b){ return scoreMatch(b,q)-scoreMatch(a,q); });
+      var best=res.length?scoreMatch(res[0],q):-999;
+      // a weak match means the city database guessed; ask Photon, which knows regions
+      if(best<140){
+        return photonSearch(q).then(function(pres){
+          if(!pres.length) return res;
+          pres.sort(function(a,b){ return scoreMatch(b,q)-scoreMatch(a,q); });
+          var merged=pres.concat(res);
+          var seen={}, uniq=[];
+          merged.forEach(function(g){
+            var k=(g.name||"")+"|"+(g.country_code||"")+"|"+Math.round(g.latitude*10);
+            if(!seen[k]){ seen[k]=1; uniq.push(g); }
+          });
+          return uniq;
+        }).catch(function(){ return res; });
+      }
+      return res;
+    })
+    .then(function(res){
+      if(!res.length) throw new Error("nf");
+      renderMatches(res,q);
+      return useGeo(res[0],false);
+    })
+    .catch(function(){ out.textContent="could not find that one, darling. Try the nearest town."; });
+}
+/* where am I, and does this warrant a flight */
+function haversine(a,b,c,d2){
+  var R=6371,dLat=(c-a)*Math.PI/180,dLon=(d2-b)*Math.PI/180;
+  var x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return Math.round(2*R*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)));
+}
+function updateHomeNote(){
+  var host=el("home-host"); if(!host) return;
+  if(!state.home||!state.coords){ host.innerHTML=""; return; }
+  var km=haversine(state.home.lat,state.home.lon,state.coords.lat,state.coords.lon);
+  var miles=Math.round(km*0.621371);
+  var msg,flight=true;
+  if(km<120){ msg="That is only "+miles+" miles away. Hardly a journey, let alone a flight."; flight=false; }
+  else if(km<450){ msg=miles+" miles. Drivable, or a train. I would not bother with an airport."; flight=false; }
+  else if(km<1200){ msg=miles+" miles. Short flight, or a long train if you are feeling romantic."; }
+  else { msg=miles+" miles away. That is a proper flight, darling."; }
+  var diffCountry=state.home.cc&&state.countryCode&&state.home.cc!==state.countryCode;
+  if(diffCountry&&!state.intl){ state.intl=true; el("intl").checked=true; msg+=" Different country, so I have ticked international for you."; }
+  state.needsFlight=flight;
+  updateRelevance();
+  host.innerHTML='<div class="hint" style="margin:0;">'+msg+'</div>';
+}
+function whereAmI(){
+  var out=el("wxout");
+  if(!navigator.geolocation){ out.textContent="your browser will not share a location, darling"; return; }
+  out.textContent="finding you...";
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var la=pos.coords.latitude, lo=pos.coords.longitude;
+    state.home={lat:la,lon:lo,cc:""};
+    fetch("https://photon.komoot.io/reverse?lat="+la+"&lon="+lo+"&limit=1&lang=en")
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var p=((d.features||[])[0]||{}).properties||{};
+        state.home.cc=p.countrycode||"";
+        state.homeLabel=[p.city||p.name,p.country].filter(Boolean).join(", ");
+        if(!el("f-from").value&&state.homeLabel){ el("f-from").value=p.city||p.name||""; state.flight.from=el("f-from").value; renderFlightLinks(); }
+        out.textContent=state.homeLabel?("You are in "+state.homeLabel+"."):"Found you.";
+        updateHomeNote();
+      })
+      .catch(function(){ out.textContent="Found you, roughly."; updateHomeNote(); });
+  },function(){ out.textContent="you said no to sharing your location, which is fair"; },{timeout:10000});
+}
+el("whereami").onclick=whereAmI;
 el("wx").onclick=checkWeather;
 
 /* ---------- generate ---------- */
@@ -489,8 +620,9 @@ function generate(){
   var laundry=(d>=8)&&(a.laundry_ok!==false); var dEff=laundry?Math.ceil(d/2)+1:d;
 
   var cap=[];
-  var tops=clamp(Math.ceil((Math.ceil(dEff*0.6)+2)*mult),3,12);
-  var bottoms=clamp(Math.ceil((Math.ceil(dEff/3)+1)*mult),2,6);
+  var looksNeeded=dEff+(nightlife?Math.ceil(dEff/2):0);
+  var tops=clamp(Math.round(looksNeeded*0.8*mult),2,12);
+  var bottoms=clamp(Math.ceil(looksNeeded/3*mult),1,6);
   cap.push({item:"Tops",qty:tops}); cap.push({item:"Bottoms",qty:bottoms});
   var dresses=0;
   if(nightlife||smart||beach||t==="city"||t==="romantic"){ dresses=(nightlife||smart?2:1)+(p==="feral"?1:0); cap.push({item:(nightlife||smart?"Dresses / evening outfits":"A dress or nicer outfit"),qty:dresses}); }
@@ -510,7 +642,10 @@ function generate(){
   if(cosy) cap.push({item:"Something soft to lounge in",qty:1});
 
   var pieces=cap.reduce(function(s,i){return s+i.qty;},0);
-  var outfits=tops*bottoms+dresses*2+(active?3:0);
+  var combos=tops*bottoms+dresses;
+  var spare={minimalist:0,sensible:1,overpacker:3,feral:5}[p];
+  if(spare===undefined) spare=1;
+  var outfits=Math.min(combos,d+spare);
 
   var list={};
   list["Clothing"]=cap.map(function(i){return i.item+"  x"+i.qty;});
@@ -741,7 +876,7 @@ function renderPieces(){
   var op=document.createElement("div"); op.style.marginTop="18px";
   if(ob){
     op.innerHTML='<h4 style="font-family:var(--serif);font-size:18px;color:var(--accent-deep);margin:0 0 4px;">Your outfits</h4>'+
-      '<p class="hint">'+ob.combos+' looks from '+ob.tops+' tops and '+ob.bottoms+' bottoms'+(ob.dresses?' plus '+ob.dresses+' dresses':'')+'. Enough that no one will ever know you repeat.</p>';
+      '<p class="hint">'+ob.plan.length+' day'+(ob.plan.length===1?'':'s')+' of looks from '+ob.tops+' top'+(ob.tops===1?'':'s')+' and '+ob.bottoms+' bottom'+(ob.bottoms===1?'':'s')+(ob.dresses?' plus '+ob.dresses+' dress'+(ob.dresses===1?'':'es'):'')+'. No repeats, no one the wiser.</p>';
     var ol=document.createElement("div");
     ob.plan.forEach(function(look,i){
       var dd=document.createElement("div"); dd.style.cssText="padding:9px 0;border-bottom:1px solid rgba(120,100,80,0.08);font-size:15px;";
@@ -1096,10 +1231,11 @@ function renderSavedPlaces(){
 }
 /* ---- saved trips ---- */
 function snapshotTrip(){
-  return {id:state.tripId||Date.now(), name:(state.dest||"Untitled trip"), dest:state.dest, days:state.days,
+  return {id:state.tripId||Date.now(), name:(state.dest||state.destLabel||"Untitled trip"), dest:state.dest, days:state.days,
     dstart:state.dstart, dend:state.dend, climate:state.climate, snow:state.snow, rainLikely:state.rainLikely,
     tripType:state.tripType, personality:state.personality, answers:state.answers, intl:state.intl,
-    coords:state.coords, flight:state.flight, places:state.places, list:state.list, myItems:state.myItems};
+    coords:state.coords, flight:state.flight, places:state.places, list:state.list, myItems:state.myItems,
+    bags:state.bags, ppExpiry:state.ppExpiry, destLabel:state.destLabel, lastWx:state.lastWx};
 }
 function saveTrip(){
   var trips=store.get("valise_trips")||[];
@@ -1116,12 +1252,15 @@ function loadTrip(id){
   state.tripType=t.tripType||""; state.personality=t.personality||"sensible"; state.answers=t.answers||{};
   state.intl=!!t.intl; state.coords=t.coords||null; state.flight=t.flight||{}; state.places=t.places||[];
   state.list=t.list||null; state.myItems=t.myItems||state.myItems;
+  state.bags=t.bags||[]; state.ppExpiry=t.ppExpiry||""; state.destLabel=t.destLabel||""; state.lastWx=t.lastWx||null;
+  var ppe=el("pp-exp"); if(ppe) ppe.value=state.ppExpiry;
   el("dest").value=state.dest; el("days").value=state.days;
   el("daysval").textContent=state.days+(state.days===1?" day":" days");
   el("d-start").value=state.dstart; el("d-end").value=state.dend; el("intl").checked=state.intl;
   ["from","to","airline","num","time","conf"].forEach(function(k){ var e2=el("f-"+k); if(e2) e2.value=state.flight[k]||""; });
   if(state.tripType) applyTheme(state.tripType);
   renderModeChips(); paintClimate(); renderQuestions(); renderCountdown(); renderFlightLinks();
+  updateRelevance(); renderPassport(); renderTimeline();
   if(state.coords) fetchForecast(state.coords.lat,state.coords.lon);
   if(state.list) renderResult();
   window.scrollTo({top:0,behavior:"smooth"});
@@ -1400,7 +1539,7 @@ function renderResult(){
     '<div class="meta">'+state.days+(state.days===1?" day":" days")+' &middot; '+condLabel()+' &middot; '+(pers?pers.label.toLowerCase():"sensible")+'</div>'+
     '<div class="counts">'+
       '<div class="pill"><b id="pieces-pill">'+r.pieces+'</b> pieces</div>'+
-      '<div class="pill">about <b>'+r.outfits+'</b> outfits</div>'+
+      '<div class="pill"><b>'+r.outfits+'</b> outfits for '+r.days+' day'+(r.days===1?'':'s')+'</div>'+
       (r.laundry?'<div class="pill"><b>1</b> mid-trip wash</div>':'')+
     '</div>';
   out.appendChild(sum);
@@ -1523,7 +1662,17 @@ function renderResult(){
   var saveTripBtn=document.createElement("button"); saveTripBtn.className="btn btn-ghost"; saveTripBtn.textContent="Save this trip";
   saveTripBtn.onclick=function(){ saveTrip(); saveTripBtn.textContent="Trip saved"; setTimeout(function(){saveTripBtn.textContent="Save this trip";},1800); };
   var newBtn=document.createElement("button"); newBtn.className="btn btn-ghost"; newBtn.textContent="Start a new trip";
-  newBtn.onclick=function(){ state.list=null; state.tripId=null; state.places=[]; store.set("valise_current",null); el("result").innerHTML=""; window.scrollTo({top:0,behavior:"smooth"}); };
+  newBtn.onclick=function(){
+    state.list=null; state.tripId=null; state.places=[]; state.bags=[]; state.forecast=null;
+    state.lastWx=null; state.coords=null; state.countryCode=""; state.countryName=""; state.destLabel="";
+    state.dstart=""; state.dend=""; state.flight={}; state.answers={};
+    el("dest").value=""; el("d-start").value=""; el("d-end").value="";
+    ["from","to","airline","num","time","conf"].forEach(function(k){ var e2=el("f-"+k); if(e2) e2.value=""; });
+    el("wxout").textContent=""; el("dest-matches").innerHTML=""; el("home-host").innerHTML="";
+    store.set("valise_current",null); el("result").innerHTML="";
+    renderQuestions(); renderCountdown(); renderFlightLinks(); renderTimeline();
+    window.scrollTo({top:0,behavior:"smooth"});
+  };
   row.appendChild(copyBtn); row.appendChild(calBtn); row.appendChild(shareBtn); row.appendChild(saveTripBtn); row.appendChild(newBtn); out.appendChild(row);
   armReveal();
   updateProgress();
@@ -1551,6 +1700,7 @@ el("d-end").addEventListener("change",function(){ state.dend=el("d-end").value; 
 });
 el("pp-exp").addEventListener("change",function(){ state.ppExpiry=el("pp-exp").value; renderPassport(); });
 paintClimate();
+updateRelevance();
 renderSupps();
 renderCountdown();
 renderPassport();
