@@ -489,19 +489,41 @@ function wxSentence(){
   var w=state.lastWx; if(!w) return "";
   return w.place+": about "+Math.round(toUnit(w.avg))+uSym()+" this week, so I have called it "+state.climate+(state.rainLikely?", with rain likely":"")+".";
 }
-/* score a geocoding result so "The Cotswolds" does not land in Hong Kong */
-var BIG_ENGLISH={GB:1,US:1,IE:1,AU:1,CA:1,NZ:1};
+/* Which "Paris" did they mean? Size and status decide, not my assumptions. */
 function scoreMatch(g,typed){
-  var s=0, name=(g.name||"").toLowerCase(), q=typed.toLowerCase().replace(/^the\s+/,"").trim();
-  if(name===q) s+=200;
-  else if(name.indexOf(q)===0) s+=120;
-  else if(name.indexOf(q)>-1) s+=60;
+  var s=0;
+  var name=(g.name||"").toLowerCase();
+  var q=(typed||"").toLowerCase().replace(/^the\s+/,"").trim();
+  // name match
+  if(name===q) s+=150;
+  else if(name.indexOf(q)===0) s+=95;
+  else if(name.indexOf(q)>-1) s+=45;
+  else s-=40;
+  // size is the strongest signal of which place people mean, and it is not capped
   var pop=g.population||0;
-  s+=Math.min(80,Math.log10(pop+10)*16);
-  if(BIG_ENGLISH[g.country_code]) s+=28;              // typed in English, likely means the English-speaking one
-  if(g.feature_code&&/^PPLC|^ADM1|^PPLA/.test(g.feature_code)) s+=25;
-  if(g.feature_code&&/^PPLX|^PPLL/.test(g.feature_code)) s-=20;
+  s+=Math.log10(pop+10)*45;
+  if(pop>0&&pop<5000) s-=35;          // a hamlet is rarely the answer
+  if(pop>=1000000) s+=45;             // a genuine metropolis
+  // status
+  var fc=g.feature_code||"";
+  if(fc==="PPLC") s+=140;             // national capital
+  else if(/^PPLA$/.test(fc)) s+=45;   // regional capital
+  else if(/^PPLA[2-4]$/.test(fc)) s+=12;
+  else if(/^PPLX|^PPLL|^PPLQ|^PPLW/.test(fc)) s-=45;  // a suburb, a hamlet, an abandoned place
+  // only a small nudge toward where the traveller actually is
+  if(state.home&&state.home.cc&&g.country_code===state.home.cc) s+=18;
   return s;
+}
+/* one entry per country, so five American Parises never crowd out the French one */
+function dedupeByCountry(list,perCountry){
+  perCountry=perCountry||1;
+  var seen={}, out=[];
+  list.forEach(function(g){
+    var cc=g.country_code||g.country||"?";
+    seen[cc]=(seen[cc]||0);
+    if(seen[cc]<perCountry){ seen[cc]++; out.push(g); }
+  });
+  return out;
 }
 function placeLabel(g){
   return g.name+(g.admin1?", "+g.admin1:"")+(g.country?", "+g.country:"");
@@ -568,7 +590,7 @@ function checkWeather(){
   out.textContent="checking...";
   el("dest-matches").innerHTML="";
   var bare=q.replace(/^the\s+/i,"").trim();
-  fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(bare)+"&count=10&language=en")
+  fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(bare)+"&count=20&language=en")
     .then(function(r){return r.json();})
     .then(function(geo){ return (geo.results||[]); })
     .catch(function(){ return []; })
@@ -593,8 +615,15 @@ function checkWeather(){
     })
     .then(function(res){
       if(!res.length) throw new Error("nf");
-      renderMatches(res,q);
-      return useGeo(res[0],false);
+      res.sort(function(a,b){ return scoreMatch(b,q)-scoreMatch(a,q); });
+      var shortlist=dedupeByCountry(res,1);
+      // keep a strong second option from the same country if it is a big place
+      res.forEach(function(g){
+        if(shortlist.length<6 && shortlist.indexOf(g)<0 && (g.population||0)>250000) shortlist.push(g);
+      });
+      shortlist.sort(function(a,b){ return scoreMatch(b,q)-scoreMatch(a,q); });
+      renderMatches(shortlist,q);
+      return useGeo(shortlist[0],false);
     })
     .catch(function(){ out.textContent="could not find that one, darling. Try the nearest town."; });
 }
@@ -842,7 +871,8 @@ function generate(){
   if(!laptop && (t==="business")) alerts.push("You said no laptop for a work trip. Bold. I have left it out, as instructed.");
   if(p==="feral") alerts.push("Feral mode engaged. I have packed for four hypothetical lives, and I have no notes.");
 
-  return {capsule:cap,pieces:pieces,outfits:outfits,list:list,wearPlane:wearPlane,laundry:laundry,alerts:alerts,days:d,tops:tops,bottoms:bottoms};
+  return {capsule:cap,pieces:pieces,outfits:outfits,list:list,wearPlane:wearPlane,laundry:laundry,alerts:alerts,days:d,tops:tops,bottoms:bottoms,
+    built:{days:d,climate:c,pers:p,type:t,mode:state.mode,intl:state.intl}};
 }
 
 /* ---------- item-level layer: pieces, doubles, outfits ---------- */
@@ -1632,16 +1662,39 @@ function renderResult(){
 
   // trip summary
   var pers=PERS.filter(function(x){return x.key===state.personality;})[0];
+  var bb=r.built||{days:r.days,climate:state.climate,pers:state.personality};
+  var bDays=bb.days, bCond=(bb.climate||"mild")+(state.rainLikely?", rain likely":"");
+  var bPersObj=PERS.filter(function(x){return x.key===bb.pers;})[0];
+  var bPersLabel=bPersObj?bPersObj.label.toLowerCase():"sensible";
   var sum=document.createElement("div"); sum.className="trip-summary";
   var destName=state.dest?state.dest.replace(/</g,"&lt;"):"Your trip";
   sum.innerHTML='<div class="dest">'+destName+'</div>'+
-    '<div class="meta">'+state.days+(state.days===1?" day":" days")+' &middot; '+condLabel()+' &middot; '+(pers?pers.label.toLowerCase():"sensible")+'</div>'+
+    '<div class="meta">'+bDays+(bDays===1?" day":" days")+' &middot; '+bCond+' &middot; '+bPersLabel+'</div>'+
     '<div class="counts">'+
       '<div class="pill"><b id="pieces-pill">'+r.pieces+'</b> pieces</div>'+
       '<div class="pill"><b>'+r.outfits+'</b> outfits for '+r.days+' day'+(r.days===1?'':'s')+'</div>'+
       (r.laundry?'<div class="pill"><b>1</b> mid-trip wash</div>':'')+
     '</div>';
   out.appendChild(sum);
+
+  // has anything changed since this list was built?
+  (function(){
+    var b=r.built; if(!b) return;
+    var diffs=[];
+    if(b.days!==state.days) diffs.push("the trip is now "+state.days+" day"+(state.days===1?"":"s"));
+    if(b.climate!==state.climate) diffs.push("the weather is now "+state.climate);
+    if(b.pers!==state.personality) diffs.push("you have changed how you pack");
+    if(b.type!==state.tripType) diffs.push("the trip type has changed");
+    if(b.mode!==state.mode) diffs.push("you are travelling a different way");
+    if(b.intl!==state.intl) diffs.push("the international setting has changed");
+    if(!diffs.length) return;
+    var warn=document.createElement("div"); warn.className="alerts"; warn.style.borderStyle="solid";
+    warn.innerHTML='<h3>This list is out of date</h3><p style="margin:0 0 12px;">Since I packed this, '+diffs.join(", and ")+'. Shall I do it again?</p>';
+    var rb=document.createElement("button"); rb.className="btn btn-ghost"; rb.textContent="Rebuild the list";
+    rb.onclick=function(){ el("build").click(); };
+    warn.appendChild(rb);
+    out.appendChild(warn);
+  })();
 
   // forecast
   var fcard=document.createElement("div"); fcard.className="card";
