@@ -225,21 +225,53 @@
     <div id="timeline-host"></div>
   </div>
 
-  <div class="card">
-    <h2 class="step">Your flight</h2>
-    <p class="hint">Optional. Keep the details here so you are not digging through your inbox at the gate.</p>
-    <div class="daterow">
-      <div><span style="font-size:13px;color:var(--soft);">from</span><input type="text" id="f-from" placeholder="London" /></div>
-      <div><span style="font-size:13px;color:var(--soft);">to</span><input type="text" id="f-to" placeholder="Lisbon" /></div>
+  <div class="card" id="travel-card">
+    <h2 class="step">Getting there</h2>
+    <p class="hint">Not taking a flight? Tell me how you are travelling and I will keep the right things in mind.</p>
+    <div class="chips" id="mode-chips"></div>
+
+    <div id="panel-fly" style="margin-top:16px;">
+      <div class="daterow">
+        <div><span style="font-size:13px;color:var(--soft);">from</span><input type="text" id="f-from" placeholder="London" /></div>
+        <div><span style="font-size:13px;color:var(--soft);">to</span><input type="text" id="f-to" placeholder="Lisbon" /></div>
+      </div>
+      <div class="daterow" style="margin-top:10px;">
+        <div><span style="font-size:13px;color:var(--soft);">airline</span><input type="text" id="f-airline" placeholder="TAP" /></div>
+        <div><span style="font-size:13px;color:var(--soft);">flight number</span><input type="text" id="f-num" placeholder="TP1359" /></div>
+      </div>
+      <div class="daterow" style="margin-top:10px;">
+        <div><span style="font-size:13px;color:var(--soft);">departs</span><input type="text" id="f-time" placeholder="14:05" /></div>
+        <div><span style="font-size:13px;color:var(--soft);">confirmation</span><input type="text" id="f-conf" placeholder="ABC123" /></div>
+      </div>
     </div>
-    <div class="daterow" style="margin-top:10px;">
-      <div><span style="font-size:13px;color:var(--soft);">airline</span><input type="text" id="f-airline" placeholder="TAP" /></div>
-      <div><span style="font-size:13px;color:var(--soft);">flight number</span><input type="text" id="f-num" placeholder="TP1359" /></div>
+
+    <div id="panel-train" style="margin-top:16px;" hidden>
+      <div class="daterow">
+        <div><span style="font-size:13px;color:var(--soft);">from station</span><input type="text" id="t-from" placeholder="London St Pancras" /></div>
+        <div><span style="font-size:13px;color:var(--soft);">to station</span><input type="text" id="t-to" placeholder="Paris Gare du Nord" /></div>
+      </div>
+      <div class="daterow" style="margin-top:10px;">
+        <div><span style="font-size:13px;color:var(--soft);">operator</span><input type="text" id="t-op" placeholder="Eurostar, Amtrak, JR, Renfe..." /></div>
+        <div><span style="font-size:13px;color:var(--soft);">train number</span><input type="text" id="t-num" placeholder="9024" /></div>
+      </div>
+      <div class="daterow" style="margin-top:10px;">
+        <div><span style="font-size:13px;color:var(--soft);">departs</span><input type="text" id="t-time" placeholder="09:31" /></div>
+        <div><span style="font-size:13px;color:var(--soft);">coach and seat</span><input type="text" id="t-seat" placeholder="Coach 7, seat 42" /></div>
+      </div>
+      <div class="daterow" style="margin-top:10px;">
+        <div><span style="font-size:13px;color:var(--soft);">booking reference</span><input type="text" id="t-conf" placeholder="ABC123" /></div>
+      </div>
     </div>
-    <div class="daterow" style="margin-top:10px;">
-      <div><span style="font-size:13px;color:var(--soft);">departs</span><input type="text" id="f-time" placeholder="14:05" /></div>
-      <div><span style="font-size:13px;color:var(--soft);">confirmation</span><input type="text" id="f-conf" placeholder="ABC123" /></div>
+
+    <div id="panel-drive" style="margin-top:16px;" hidden>
+      <div class="daterow">
+        <div><span style="font-size:13px;color:var(--soft);">setting off from</span><input type="text" id="c-from" placeholder="Miami" /></div>
+        <div><span style="font-size:13px;color:var(--soft);">driving to</span><input type="text" id="c-to" placeholder="Savannah" /></div>
+      </div>
+      <label class="toggle" style="margin-top:12px;"><input type="checkbox" id="c-electric" /> it is an electric car</label>
+      <div id="drive-note" style="margin-top:12px;"></div>
     </div>
+
     <div class="btnrow" id="flight-links"></div>
   </div>
 
@@ -325,13 +357,29 @@ var PLUGS={US:"type A and B",CA:"type A and B",JP:"type A and B",MX:"type A and 
 
 var state={dest:"",countryCode:"",countryName:"",days:5,climate:"mild",intl:false,snow:false,rainLikely:false,lastFlag:"",
   tripType:"",personality:"sensible",answers:{},units:store.get("valise_units")||"C",rules:store.get("valise_rules")||[],supps:store.get("valise_supps")||[],myItems:store.get("valise_items")||[],bags:[],list:null,
-  dstart:"",dend:"",flight:{},forecast:null,places:[],tripId:null};
+  dstart:"",dend:"",mode:"fly",flight:{},train:{},drive:{},forecast:null,places:[],tripId:null};
 
 function el(id){return document.getElementById(id);}
-function noFlightTrip(){ return state.tripType==="roadtrip"; }
+var MODES=[{key:"fly",label:"Flying"},{key:"train",label:"Train"},{key:"drive",label:"Driving"}];
+function renderModeRow(){
+  var wrap=el("mode-chips"); if(!wrap) return; wrap.innerHTML="";
+  MODES.forEach(function(m){
+    var b=document.createElement("button"); b.className="chip"; b.textContent=m.label;
+    b.setAttribute("aria-pressed",state.mode===m.key?"true":"false");
+    b.onclick=function(){ state.mode=m.key; renderModeRow(); updateRelevance(); renderFlightLinks(); };
+    wrap.appendChild(b);
+  });
+}
 function updateRelevance(){
-  var fc=el("flight-card"); if(fc) fc.hidden=noFlightTrip();
-  var pb=el("pp-block"); if(pb) pb.hidden=noFlightTrip()||!state.intl;
+  var pf=el("panel-fly"), pt=el("panel-train"), pd=el("panel-drive");
+  if(pf) pf.hidden=state.mode!=="fly";
+  if(pt) pt.hidden=state.mode!=="train";
+  if(pd) pd.hidden=state.mode!=="drive";
+  var pb=el("pp-block"); if(pb) pb.hidden=!state.intl;
+  var dn=el("drive-note");
+  if(dn) dn.innerHTML=state.mode==="drive"
+    ? '<div class="hint" style="margin:0;">'+(state.drive.electric?"Plan your charging stops before you set off, and check the car is charged the night before.":"Check your fuel and your tyres before you set off. Nobody enjoys a forecourt at dawn.")+'</div>'
+    : "";
 }
 function has(arr,v){return arr.indexOf(v)>-1;}
 function clamp(n,lo,hi){return Math.max(lo,Math.min(hi,n));}
@@ -346,7 +394,7 @@ function chipRow(id,opts,getSel,onPick){
     wrap.appendChild(b);
   });
 }
-chipRow("type-chips",TYPES,function(k){return state.tripType===k;},function(k){ state.tripType=k; var t=TYPES.filter(function(x){return x.key===k;})[0]; if(t)state.climate=t.climate; applyTheme(k); paintClimate(); renderQuestions(); updateRelevance(); });
+chipRow("type-chips",TYPES,function(k){return state.tripType===k;},function(k){ state.tripType=k; var t=TYPES.filter(function(x){return x.key===k;})[0]; if(t)state.climate=t.climate; if(k==="roadtrip")state.mode="drive"; applyTheme(k); paintClimate(); renderQuestions(); renderModeRow(); updateRelevance(); renderFlightLinks(); });
 var CLIM_OPTS=[{key:"hot",label:"Hot"},{key:"warm",label:"Warm"},{key:"mild",label:"Mild"},{key:"cold",label:"Cold"}];
 var WX_OPTS=[{key:"rain",label:"Rainy"},{key:"snow",label:"Snowy"}];
 function paintClimate(){
@@ -698,6 +746,17 @@ function generate(){
   if(t==="roadtrip") list["Road kit"]=(a.driving?["Driving licence and any permit","Phone mount and car charger","An offline playlist","Snacks and a cool bag","Reusable water bottles","A blanket and a small cushion","Sunglasses for the glare"]:["An offline playlist","Snacks and a cool bag","A blanket and a small cushion","Sunglasses for the glare"]);
   if(t==="backpacking") list["Backpacking kit"]=["A padlock for hostel lockers","A quick-dry travel towel","Flip flops for shared showers","A packable day bag","Laundry sheets and a sink plug","Earplugs and a sleep mask","A first aid kit","A universal sink stopper"];
   if(t==="staghen") list["The occasion"]=["Whatever the group chat decreed","Something you can dance in","Flat shoes for hour four","Painkillers and rehydration sachets","Cash for the kitty","A charged phone and a power bank"];
+  if(state.mode==="drive"){
+    list["For the drive"]=(state.drive.electric
+      ? ["Charge the car the night before","Charging cables and any adaptors","Planned charging stops along the route","Phone mount and car charger","Snacks and a cool bag","An offline playlist"]
+      : ["Check fuel, oil and tyre pressure","Phone mount and car charger","Snacks and a cool bag","An offline playlist","Screen wash and a cloth","Breakdown cover details"]);
+    list["For the drive"].push("Driving licence, and any permit you need abroad");
+    list["For the drive"].push("A blanket and a small cushion");
+  }
+  if(state.mode==="train"){
+    list["For the train"]=["Ticket or booking reference, saved offline","A power bank, sockets are a lottery","Something to read or watch","Snacks, station food is a scandal","A light layer, carriages run cold","Headphones"];
+    if(state.intl) list["For the train"].push("Passport, for cross-border services");
+  }
   if(t==="longhaul") list["Long-haul comfort"]=["Neck pillow and eye mask","Compression socks","Refillable bottle for after security","A change of clothes in your hand luggage","Lip balm and hand cream","Downloads for the flight","Any medication in your carry-on"];
   if(t==="camping"){
     list["Camp kit"]=a.tent
@@ -741,6 +800,7 @@ function generate(){
     {label:"Passport or ID into the bag you are carrying",quip:"Confirmed. Do not put it somewhere stupid now."},
     {label:"Wallet, keys, phone, one last sweep",quip:"The holy trinity. Well done."},
     {label:"Wear the bulky things instead of packing them",quip:"Smug and space-saving. A rare combination."},
+    {label:(state.mode==="drive"?(state.drive.electric?"Check the car is charged":"Check your fuel and tyres"):state.mode==="train"?"Ticket saved offline, and check the platform":"Check the flight is on time"),quip:(state.mode==="drive"?"Sorted. No dawn forecourt panic for you.":state.mode==="train"?"Ticket in hand. Now go and find the right end of the platform.":"Checked. No nasty surprises at the gate.")},
     {label:"Water bottle empty for security, then fill it",quip:"Hydrated and law-abiding."},
     {label:"Snacks within arm's reach",quip:"You will not become a problem at hour three now."},
     {label:"Hand sanitizer in your pocket, not the case",quip:"Thank you for admitting that cleanliness is no longer a preference."},
@@ -767,6 +827,8 @@ function generate(){
   if(t==="diving"&&!a.owngear) alerts.push("Renting gear, so I packed only the personal bits. Bring your own rash vest, the rentals never fit.");
   if(t==="cruise"&&a.formalnight) alerts.push("A formal night on board, so the good outfit is in. Cruise ships take this seriously.");
   if(t==="longhaul") alerts.push("Long-haul, so medication and one change of clothes go in your hand luggage. Cases go missing, darling.");
+  if(state.mode==="drive") alerts.push(state.drive.electric?"Driving an electric car, so the charging stops are planned in. Range anxiety is not a personality.":"Driving, so fuel, tyres and breakdown cover are on the list. Very dull, very necessary.");
+  if(state.mode==="train") alerts.push("Travelling by train, so your ticket is saved offline and you are carrying a layer. Carriages are always freezing.");
   if(state.snow) alerts.push("Snow on the menu, so the boots and the woolly arsenal are in.");
   if(group) alerts.push("A group trip, so I slipped in something to play. Someone always suggests a game.");
   if(a.group===false) alerts.push("Travelling solo. Good. Nobody to negotiate the itinerary with, and the whole case is yours.");
@@ -1046,16 +1108,35 @@ function renderCountdown(){
 }
 function renderFlightLinks(){
   var host=el("flight-links"); if(!host) return; host.innerHTML="";
-  var f=state.flight||{};
   function link(label,url){ var a=document.createElement("a"); a.className="btn btn-ghost"; a.href=url; a.target="_blank"; a.rel="noopener"; a.textContent=label; a.style.textDecoration="none"; host.appendChild(a); }
-  var from=(f.from||"").trim(), to=(f.to||state.dest||"").trim();
-  if(from&&to){
-    var q="https://www.google.com/travel/flights?q="+encodeURIComponent("flights from "+from+" to "+to+(state.dstart?" on "+state.dstart:""));
-    link("Search flights",q);
+  var when=state.dstart?(" on "+state.dstart):"";
+  if(state.mode==="fly"){
+    var f=state.flight||{};
+    var from=(f.from||"").trim(), to=(f.to||state.dest||"").trim();
+    if(from&&to) link("Search flights","https://www.google.com/travel/flights?q="+encodeURIComponent("flights from "+from+" to "+to+when));
+    if((f.num||"").trim()) link("Track "+f.num.trim().toUpperCase(),"https://www.google.com/search?q="+encodeURIComponent(f.num.trim()+" flight status"));
+    if(to) link("Open "+to+" in Maps","https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(to));
+    if(!host.children.length) host.innerHTML='<div class="hint" style="margin:0;">Fill in where you are flying from and to, and the links appear here.</div>';
+  } else if(state.mode==="train"){
+    var t=state.train||{};
+    var a1=(t.from||"").trim(), b1=(t.to||state.dest||"").trim();
+    if(a1&&b1){
+      link("Find trains","https://www.rome2rio.com/map/"+encodeURIComponent(a1.replace(/\s+/g,"-"))+"/"+encodeURIComponent(b1.replace(/\s+/g,"-")));
+      link("Search times","https://www.google.com/search?q="+encodeURIComponent("trains from "+a1+" to "+b1+when));
+    }
+    if((t.op||"").trim()) link("Check "+t.op.trim(),"https://www.google.com/search?q="+encodeURIComponent(t.op.trim()+" live train times"+((t.num||"").trim()?" "+t.num.trim():"")));
+    if(b1) link("Open "+b1+" in Maps","https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(b1));
+    if(!host.children.length) host.innerHTML='<div class="hint" style="margin:0;">Add your stations and I will find you trains, wherever in the world you are.</div>';
+  } else {
+    var c=state.drive||{};
+    var a2=(c.from||"").trim(), b2=(c.to||state.dest||"").trim();
+    if(a2&&b2){
+      link("Route in Google Maps","https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(a2)+"&destination="+encodeURIComponent(b2));
+      link("Route in Apple Maps","https://maps.apple.com/?saddr="+encodeURIComponent(a2)+"&daddr="+encodeURIComponent(b2)+"&dirflg=d");
+      link(c.electric?"Charging stops":"Fuel stops on the way","https://www.google.com/maps/search/?api=1&query="+encodeURIComponent((c.electric?"ev charging between ":"petrol stations between ")+a2+" and "+b2));
+    }
+    if(!host.children.length) host.innerHTML='<div class="hint" style="margin:0;">Add where you are setting off from and I will plot the route.</div>';
   }
-  if((f.num||"").trim()) link("Track "+f.num.trim().toUpperCase(),"https://www.google.com/search?q="+encodeURIComponent(f.num.trim()+" flight status"));
-  if(to) link("Open "+to+" in Maps","https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(to));
-  if(!host.children.length) host.innerHTML='<div class="hint" style="margin:0;">Fill in where you are flying from and to, and the links appear here.</div>';
 }
 /* ---- 7 day forecast ---- */
 function toUnit(c){ return state.units==="F" ? (c*9/5+32) : c; }
@@ -1235,7 +1316,8 @@ function snapshotTrip(){
     dstart:state.dstart, dend:state.dend, climate:state.climate, snow:state.snow, rainLikely:state.rainLikely,
     tripType:state.tripType, personality:state.personality, answers:state.answers, intl:state.intl,
     coords:state.coords, flight:state.flight, places:state.places, list:state.list, myItems:state.myItems,
-    bags:state.bags, ppExpiry:state.ppExpiry, destLabel:state.destLabel, lastWx:state.lastWx};
+    bags:state.bags, ppExpiry:state.ppExpiry, destLabel:state.destLabel, lastWx:state.lastWx,
+    mode:state.mode, train:state.train, drive:state.drive};
 }
 function saveTrip(){
   var trips=store.get("valise_trips")||[];
@@ -1253,6 +1335,11 @@ function loadTrip(id){
   state.intl=!!t.intl; state.coords=t.coords||null; state.flight=t.flight||{}; state.places=t.places||[];
   state.list=t.list||null; state.myItems=t.myItems||state.myItems;
   state.bags=t.bags||[]; state.ppExpiry=t.ppExpiry||""; state.destLabel=t.destLabel||""; state.lastWx=t.lastWx||null;
+  state.mode=t.mode||"fly"; state.train=t.train||{}; state.drive=t.drive||{};
+  ["from","to","op","num","time","seat","conf"].forEach(function(k){ var e3=el("t-"+k); if(e3) e3.value=state.train[k]||""; });
+  ["from","to"].forEach(function(k){ var e3=el("c-"+k); if(e3) e3.value=state.drive[k]||""; });
+  var ce=el("c-electric"); if(ce) ce.checked=!!state.drive.electric;
+  renderModeRow();
   var ppe=el("pp-exp"); if(ppe) ppe.value=state.ppExpiry;
   el("dest").value=state.dest; el("days").value=state.days;
   el("daysval").textContent=state.days+(state.days===1?" day":" days");
@@ -1433,9 +1520,21 @@ function downloadICS(){
   var endEx=e.getFullYear()+pad(e.getMonth()+1)+pad(e.getDate());
   var f=state.flight||{};
   var desc=["Packed with Valise."];
-  if(f.airline||f.num) desc.push("Flight: "+[f.airline,f.num].filter(Boolean).join(" "));
-  if(f.time) desc.push("Departs: "+f.time);
-  if(f.conf) desc.push("Confirmation: "+f.conf);
+  if(state.mode==="fly"){
+    if(f.airline||f.num) desc.push("Flight: "+[f.airline,f.num].filter(Boolean).join(" "));
+    if(f.time) desc.push("Departs: "+f.time);
+    if(f.conf) desc.push("Confirmation: "+f.conf);
+  } else if(state.mode==="train"){
+    var tr=state.train||{};
+    if(tr.op||tr.num) desc.push("Train: "+[tr.op,tr.num].filter(Boolean).join(" "));
+    if(tr.from||tr.to) desc.push("Route: "+[tr.from,tr.to].filter(Boolean).join(" to "));
+    if(tr.time) desc.push("Departs: "+tr.time);
+    if(tr.seat) desc.push("Seat: "+tr.seat);
+    if(tr.conf) desc.push("Booking: "+tr.conf);
+  } else {
+    var dr=state.drive||{};
+    if(dr.from||dr.to) desc.push("Driving: "+[dr.from,dr.to].filter(Boolean).join(" to "));
+  }
   var title=(state.dest?state.dest:"Trip")+(state.tripType?" ("+(TYPES.filter(function(x){return x.key===state.tripType;})[0]||{label:""}).label+")":"");
   var ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Valise//EN","BEGIN:VEVENT",
     "UID:valise-"+Date.now()+"@valise","DTSTAMP:"+new Date().toISOString().replace(/[-:]/g,"").split(".")[0]+"Z",
@@ -1665,9 +1764,13 @@ function renderResult(){
   newBtn.onclick=function(){
     state.list=null; state.tripId=null; state.places=[]; state.bags=[]; state.forecast=null;
     state.lastWx=null; state.coords=null; state.countryCode=""; state.countryName=""; state.destLabel="";
-    state.dstart=""; state.dend=""; state.flight={}; state.answers={};
+    state.dstart=""; state.dend=""; state.flight={}; state.train={}; state.drive={}; state.mode="fly"; state.answers={};
     el("dest").value=""; el("d-start").value=""; el("d-end").value="";
     ["from","to","airline","num","time","conf"].forEach(function(k){ var e2=el("f-"+k); if(e2) e2.value=""; });
+    ["from","to","op","num","time","seat","conf"].forEach(function(k){ var e2=el("t-"+k); if(e2) e2.value=""; });
+    ["from","to"].forEach(function(k){ var e2=el("c-"+k); if(e2) e2.value=""; });
+    var ce2=el("c-electric"); if(ce2) ce2.checked=false;
+    renderModeRow();
     el("wxout").textContent=""; el("dest-matches").innerHTML=""; el("home-host").innerHTML="";
     store.set("valise_current",null); el("result").innerHTML="";
     renderQuestions(); renderCountdown(); renderFlightLinks(); renderTimeline();
@@ -1698,6 +1801,14 @@ el("d-end").addEventListener("change",function(){ state.dend=el("d-end").value; 
 ["from","to","airline","num","time","conf"].forEach(function(k){
   var e2=el("f-"+k); if(e2) e2.addEventListener("input",function(){ state.flight[k]=e2.value; renderFlightLinks(); });
 });
+["from","to","op","num","time","seat","conf"].forEach(function(k){
+  var e2=el("t-"+k); if(e2) e2.addEventListener("input",function(){ state.train[k]=e2.value; renderFlightLinks(); });
+});
+["from","to"].forEach(function(k){
+  var e2=el("c-"+k); if(e2) e2.addEventListener("input",function(){ state.drive[k]=e2.value; renderFlightLinks(); });
+});
+el("c-electric").addEventListener("change",function(){ state.drive.electric=el("c-electric").checked; updateRelevance(); renderFlightLinks(); });
+renderModeRow();
 el("pp-exp").addEventListener("change",function(){ state.ppExpiry=el("pp-exp").value; renderPassport(); });
 paintClimate();
 updateRelevance();
